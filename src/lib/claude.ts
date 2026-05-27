@@ -1,7 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { AIAnalysisResult, ComparisonResult } from '@/types'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+let _client: Anthropic | null = null
+function getClient() {
+  if (!_client) {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set')
+    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return _client
+}
 
 const DAMAGE_ANALYSIS_PROMPT = `You are an expert automotive damage inspector. Analyze this car image and identify any damage.
 
@@ -55,7 +62,7 @@ Return a JSON object with this exact structure:
 Respond with ONLY the JSON object, no other text.`
 
 export async function analyzeCarImage(imageBase64: string, mimeType: string = 'image/jpeg'): Promise<AIAnalysisResult> {
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [
@@ -90,7 +97,7 @@ export async function compareInspections(
 ): Promise<ComparisonResult> {
   const prompt = COMPARISON_PROMPT.replace('{PRE_DAMAGES}', JSON.stringify(preDamages, null, 2))
 
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [
