@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Car, ClipboardList, AlertTriangle, CheckCircle, Plus, ArrowRight, TrendingUp } from 'lucide-react'
 import DemoButton from '@/components/DemoButton'
-import { formatDate } from '@/lib/utils'
+import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionTypeBarColor } from '@/lib/utils'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
                 <Link key={insp.id} href={`/inspections/${insp.id}`}
                   className={`flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition-colors group ${!isLast ? 'border-b border-slate-50' : ''}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`w-2 h-10 rounded-full shrink-0 ${insp.type === 'PRE_RENTAL' ? 'bg-teal-200' : 'bg-indigo-200'}`} />
+                    <div className={`w-2 h-10 rounded-full shrink-0 ${inspectionTypeBarColor(insp.type)}`} />
                     <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-teal-50 transition-colors shrink-0">
                       <Car className="w-4 h-4 text-slate-400 group-hover:text-teal-500 transition-colors" />
                     </div>
@@ -125,10 +125,8 @@ export default async function DashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${
-                      insp.type === 'PRE_RENTAL' ? 'bg-teal-50 text-teal-700' : 'bg-indigo-50 text-indigo-700'
-                    }`}>
-                      {insp.type === 'PRE_RENTAL' ? 'Pre-rental' : 'Post-rental'}
+                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${inspectionTypeBadge(insp.type)}`}>
+                      {inspectionTypeLabel(insp.type)}
                     </span>
                     {newDmg > 0 && (
                       <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-lg font-semibold">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ScanLine, Shield, BarChart3, CheckCircle, ArrowRight, Zap, Star, ChevronRight, Gauge } from 'lucide-react'
+import { ScanLine, Shield, BarChart3, CheckCircle, ArrowRight, Zap, Star, ChevronRight, Gauge, Car, Building2, Truck, ShieldCheck, Wrench, FileText } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -15,8 +15,8 @@ export default function LandingPage() {
             <span className="text-lg font-bold text-slate-900 tracking-tight">AutoAuditAI</span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            {['Features', 'How it works', 'Pricing'].map(l => (
-              <a key={l} href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">{l}</a>
+            {['Features', 'Industries', 'Pricing'].map(l => (
+              <a key={l} href={`#${l.toLowerCase()}`} className="text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">{l}</a>
             ))}
           </div>
           <div className="flex items-center gap-3">
@@ -50,7 +50,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            AI-powered car inspection for rental businesses. Capture, detect damage, and compare before/after in minutes — not hours.
+            AI-powered vehicle inspection for rentals, dealers, fleets, insurance, body shops, and leasing. Capture, detect damage, and compare before/after in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -139,7 +139,7 @@ export default function LandingPage() {
       <section className="py-12 border-b border-slate-100 bg-white">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <p className="text-sm text-slate-400 font-medium uppercase tracking-wider mb-8">
-            Built for rental businesses across
+            Trusted across industries in
           </p>
           <div className="flex items-center justify-center gap-8 flex-wrap">
             {['Pakistan 🇵🇰', 'Indonesia 🇮🇩', 'Malaysia 🇲🇾', 'UAE 🇦🇪', 'Saudi Arabia 🇸🇦'].map(c => (
@@ -150,7 +150,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-24 px-6 bg-white">
+      <section id="features" className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-block text-teal-600 text-xs font-bold uppercase tracking-widest mb-4">Why AutoAuditAI</span>
@@ -184,8 +184,8 @@ export default function LandingPage() {
                 glow: 'shadow-emerald-500/20',
                 bg: 'group-hover:bg-emerald-50',
                 title: 'Before/After Comparison',
-                desc: 'Pre and post-rental inspections are compared automatically. Only new damage is flagged — no false accusations.',
-                points: ['Auto-linked to pre-rental', 'New damage highlighted in red', 'PDF report in one click'],
+                desc: 'Pre and post-inspections are compared automatically. Only new damage is flagged — no false accusations.',
+                points: ['Auto-linked to pre-inspection', 'New damage highlighted', 'PDF report in one click'],
               },
             ].map(f => (
               <div key={f.title} className={`group relative bg-white rounded-2xl border border-slate-100 p-7 card-hover shadow-sm hover:border-slate-200 ${f.bg} transition-colors`}>
@@ -229,6 +229,77 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── WHO IT'S FOR ── */}
+      <section id="industries" className="py-24 px-6 bg-slate-950 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-teal-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-14">
+            <span className="inline-block text-teal-400 text-xs font-bold uppercase tracking-widest mb-4">Industries</span>
+            <h2 className="text-4xl font-black text-white tracking-tight">Built for every vehicle business</h2>
+            <p className="mt-4 text-slate-400 text-lg max-w-2xl mx-auto">
+              One platform, six industries. Try a live demo tailored to your use case.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                key: 'rental', icon: Car, color: 'from-teal-500 to-teal-600', glow: 'shadow-teal-500/20',
+                label: 'Car Rentals', border: 'hover:border-teal-500/30',
+                points: ['Pre/post-rental comparison', 'Dispute-proof documentation', 'Renter sign-off receipts'],
+              },
+              {
+                key: 'dealer', icon: Building2, color: 'from-indigo-500 to-indigo-600', glow: 'shadow-indigo-500/20',
+                label: 'Dealerships', border: 'hover:border-indigo-500/30',
+                points: ['Pre-sale condition reports', 'Trade-in damage records', 'Build buyer confidence'],
+              },
+              {
+                key: 'fleet', icon: Truck, color: 'from-cyan-500 to-cyan-600', glow: 'shadow-cyan-500/20',
+                label: 'Fleet Managers', border: 'hover:border-cyan-500/30',
+                points: ['Shift-start / shift-end checks', 'Driver accountability trail', 'Multi-vehicle dashboard'],
+              },
+              {
+                key: 'insurance', icon: ShieldCheck, color: 'from-violet-500 to-violet-600', glow: 'shadow-violet-500/20',
+                label: 'Insurance', border: 'hover:border-violet-500/30',
+                points: ['Pre/post-claim evidence', 'Faster claim processing', 'Reduce fraudulent claims'],
+              },
+              {
+                key: 'bodyshop', icon: Wrench, color: 'from-amber-500 to-amber-600', glow: 'shadow-amber-500/20',
+                label: 'Body Shops', border: 'hover:border-amber-500/30',
+                points: ['Drop-off vs pick-up audit', 'Transparent repair cost proof', 'Customer sign-off'],
+              },
+              {
+                key: 'leasing', icon: FileText, color: 'from-rose-500 to-rose-600', glow: 'shadow-rose-500/20',
+                label: 'Leasing', border: 'hover:border-rose-500/30',
+                points: ['Lease-start condition baseline', 'Lease-end excess wear charges', 'Legal-grade documentation'],
+              },
+            ].map(ind => (
+              <div key={ind.key} className={`group bg-white/5 border border-white/8 ${ind.border} rounded-2xl p-6 transition-all hover:bg-white/8`}>
+                <div className={`w-11 h-11 bg-gradient-to-br ${ind.color} rounded-xl flex items-center justify-center mb-4 shadow-lg ${ind.glow}`}>
+                  <ind.icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-white font-bold text-base mb-3">{ind.label}</h3>
+                <ul className="space-y-1.5 mb-5">
+                  {ind.points.map(p => (
+                    <li key={p} className="flex items-center gap-2 text-slate-400 text-sm">
+                      <CheckCircle className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={`/demo?industry=${ind.key}`}
+                  className="inline-flex items-center gap-1.5 text-teal-400 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                >
+                  Try {ind.label} demo <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ── */}
       <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-4xl mx-auto">
@@ -240,9 +311,9 @@ export default function LandingPage() {
           <div className="space-y-4">
             {[
               { n: '01', title: 'Add your vehicle', desc: 'Enter make, model, year, and license plate. Takes 30 seconds per car.' },
-              { n: '02', title: 'Capture pre-rental photos', desc: 'Follow the guided 8-angle walkthrough on your phone. All angles documented.' },
+              { n: '02', title: 'Capture pre-inspection photos', desc: 'Follow the guided 8-angle walkthrough on your phone. All angles documented.' },
               { n: '03', title: 'AI analyzes & reports', desc: 'Claude Vision detects every scratch, dent, and paint chip. Timestamped PDF generated instantly.' },
-              { n: '04', title: 'Compare on return', desc: 'Post-rental inspection is automatically compared. New damage flagged in red with repair cost estimate.' },
+              { n: '04', title: 'Compare on return', desc: 'Post-inspection is automatically compared. New damage flagged with repair cost estimate.' },
             ].map((step) => (
               <div key={step.n} className="flex gap-6 items-start bg-white rounded-2xl p-6 border border-slate-100 shadow-sm group hover:border-teal-100 transition-colors">
                 <div className="w-12 h-12 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0 shadow-lg shadow-teal-500/20">
@@ -278,26 +349,136 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING TEASER ── */}
-      <section className="py-16 px-6 bg-slate-50 border-t border-slate-100">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-black text-slate-900 mb-3">Simple, affordable pricing</h2>
-          <p className="text-slate-500 mb-8">Starting at <strong className="text-slate-900">$29/month</strong> for up to 20 vehicles. No per-inspection fees.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-teal-700 transition-all shadow-lg shadow-teal-500/20 hover:-translate-y-0.5">
-              Start free 14-day trial
-              <ArrowRight className="w-4 h-4" />
+      {/* ── PRICING ── */}
+      <section id="pricing" className="py-24 px-6 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block text-teal-600 text-xs font-bold uppercase tracking-widest mb-4">Pricing</span>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Pay per inspection, not per seat</h2>
+            <p className="mt-4 text-slate-500 text-lg max-w-xl mx-auto">
+              Buy monthly inspection credits. Use them for any vehicle, any industry. Unused credits roll over.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+            {[
+              {
+                name: 'Starter',
+                price: '$19',
+                period: '/mo',
+                inspections: '50 inspections',
+                desc: 'Perfect for small fleets and solo operators.',
+                features: ['50 inspection credits/mo', 'AI damage detection', 'PDF reports', 'Email support'],
+                cta: 'Start free trial',
+                highlight: false,
+              },
+              {
+                name: 'Growth',
+                price: '$49',
+                period: '/mo',
+                inspections: '200 inspections',
+                desc: 'For growing rental or fleet businesses.',
+                features: ['200 inspection credits/mo', 'Before/after comparison', 'Multi-vehicle dashboard', 'Priority support'],
+                cta: 'Start free trial',
+                highlight: true,
+              },
+              {
+                name: 'Pro',
+                price: '$99',
+                period: '/mo',
+                inspections: '600 inspections',
+                desc: 'High-volume operations and multi-branch businesses.',
+                features: ['600 inspection credits/mo', 'All Growth features', 'API access', 'Dedicated onboarding'],
+                cta: 'Start free trial',
+                highlight: false,
+              },
+              {
+                name: 'Enterprise',
+                price: 'Custom',
+                period: '',
+                inspections: 'Unlimited',
+                desc: 'Large fleets, insurance firms, and dealership groups.',
+                features: ['Unlimited inspections', 'White-label option', 'Custom integrations', 'SLA + dedicated support'],
+                cta: 'Contact sales',
+                highlight: false,
+              },
+            ].map(plan => (
+              <div
+                key={plan.name}
+                className={`relative rounded-2xl p-6 border transition-all ${
+                  plan.highlight
+                    ? 'bg-teal-600 border-teal-500 shadow-xl shadow-teal-500/20 scale-[1.02]'
+                    : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
+                }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-xs font-black px-3 py-1 rounded-full">
+                    MOST POPULAR
+                  </div>
+                )}
+                <div className="mb-5">
+                  <div className={`text-xs font-bold uppercase tracking-widest mb-1 ${plan.highlight ? 'text-teal-100' : 'text-slate-400'}`}>
+                    {plan.name}
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>{plan.price}</span>
+                    <span className={`text-sm ${plan.highlight ? 'text-teal-200' : 'text-slate-400'}`}>{plan.period}</span>
+                  </div>
+                  <div className={`text-sm font-semibold mt-1 ${plan.highlight ? 'text-teal-100' : 'text-teal-600'}`}>
+                    {plan.inspections}
+                  </div>
+                  <p className={`text-sm mt-2 leading-snug ${plan.highlight ? 'text-teal-100' : 'text-slate-500'}`}>{plan.desc}</p>
+                </div>
+
+                <ul className="space-y-2.5 mb-6">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-start gap-2 text-sm">
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlight ? 'text-teal-200' : 'text-teal-500'}`} />
+                      <span className={plan.highlight ? 'text-teal-50' : 'text-slate-600'}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href={plan.name === 'Enterprise' ? '/login' : '/register'}
+                  className={`block text-center py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    plan.highlight
+                      ? 'bg-white text-teal-700 hover:bg-teal-50'
+                      : 'bg-teal-600 text-white hover:bg-teal-700 shadow-md shadow-teal-500/20'
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-slate-400 text-sm">
+            All plans include a 14-day free trial. No credit card required.
+          </p>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="py-20 px-6 bg-slate-950 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/20 to-transparent pointer-events-none" />
+        <div className="max-w-3xl mx-auto text-center relative">
+          <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Start protecting your fleet today</h2>
+          <p className="text-slate-400 mb-8 text-lg">Join thousands of vehicle businesses using AI to eliminate damage disputes.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-teal-500 transition-all shadow-xl shadow-teal-500/25 hover:-translate-y-0.5">
+              Start for free <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/demo" className="inline-flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 px-8 py-3.5 rounded-xl text-sm font-semibold hover:border-slate-300 hover:bg-slate-50 transition-all">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              See live demo
+            <Link href="/demo" className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-white/12 transition-all">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              Try live demo
             </Link>
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-slate-950 py-12 px-6">
+      <footer className="bg-slate-950 border-t border-white/5 py-12 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
@@ -306,7 +487,7 @@ export default function LandingPage() {
               </div>
               <span className="text-white font-bold">AutoAuditAI</span>
             </div>
-            <p className="text-slate-500 text-sm">© 2024 AutoAuditAI. AI-powered car damage detection.</p>
+            <p className="text-slate-500 text-sm">© 2024 AutoAuditAI. AI-powered vehicle damage detection.</p>
             <div className="flex gap-6">
               {['Privacy', 'Terms', 'Contact'].map(l => (
                 <a key={l} href="#" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">{l}</a>

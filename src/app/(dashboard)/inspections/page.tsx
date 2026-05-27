@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ClipboardList, Plus, Car } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, inspectionTypeLabel, inspectionTypeBadge } from '@/lib/utils'
 
 export default async function InspectionsPage() {
   const session = await getServerSession(authOptions)
@@ -65,10 +65,8 @@ export default async function InspectionsPage() {
                     </Link>
                   </td>
                   <td className="px-5 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${
-                      insp.type === 'PRE_RENTAL' ? 'bg-teal-50 text-teal-700' : 'bg-indigo-50 text-indigo-700'
-                    }`}>
-                      {insp.type === 'PRE_RENTAL' ? 'Pre-rental' : 'Post-rental'}
+                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${inspectionTypeBadge(insp.type)}`}>
+                      {inspectionTypeLabel(insp.type)}
                     </span>
                   </td>
                   <td className="px-5 py-4">
