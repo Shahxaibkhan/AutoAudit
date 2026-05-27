@@ -47,7 +47,7 @@ export default function DemoButton({ hasData }: { hasData: boolean }) {
       <button
         onClick={removeDemo}
         disabled={removing}
-        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
+        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
         title="Remove demo data"
       >
         {removing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -60,7 +60,7 @@ export default function DemoButton({ hasData }: { hasData: boolean }) {
     <button
       onClick={loadDemo}
       disabled={loading}
-      className="flex items-center gap-2 border border-dashed border-blue-300 text-blue-600 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-50 disabled:opacity-60 transition-colors"
+      className="flex items-center gap-2 border border-dashed border-teal-300 text-teal-600 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-50 disabled:opacity-60 transition-colors"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
       {loading ? 'Loading demo...' : 'Try Demo'}
