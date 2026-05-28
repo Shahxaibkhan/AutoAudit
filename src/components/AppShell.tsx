@@ -7,13 +7,13 @@ import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Me
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
 
 const nav = [
-  { href: '/dashboard',         label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/vehicles',          label: 'Vehicles',     icon: Car },
-  { href: '/inspections',       label: 'Inspections',  icon: ClipboardList },
-  { href: '/dashboard/billing', label: 'Billing',      icon: CreditCard },
+  { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/vehicles',     label: 'Vehicles',     icon: Car },
+  { href: '/inspections',  label: 'Inspections',  icon: ClipboardList },
+  { href: '/billing',      label: 'Billing',      icon: CreditCard },
 ]
 
-const adminNav = { href: '/dashboard/admin', label: 'Admin', icon: ShieldCheck }
+const adminNav = { href: '/admin', label: 'Admin', icon: ShieldCheck }
 
 type UsageInfo = {
   plan: string
@@ -31,7 +31,7 @@ function NavLinks({ usage, isAdmin, onNavigate }: { usage: UsageInfo | null; isA
       <p className="px-3 text-xs font-semibold text-slate-600 uppercase tracking-widest mb-3">Main</p>
       {allNav.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
-        const isAdminLink = href === '/dashboard/admin'
+        const isAdminLink = href === '/admin'
         return (
           <Link key={href} href={href} onClick={onNavigate}
             className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -184,7 +184,7 @@ export default function AppShell({
           </Link>
           {/* Mobile credits pill */}
           {usage && (
-            <Link href="/dashboard/billing" className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full text-xs font-bold">
+            <Link href="/billing" className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full text-xs font-bold">
               <Zap className="w-3 h-3" />
               {usage.creditsTotal === 999999 ? '∞' : creditsRemaining(usage.creditsUsed, usage.creditsTotal)}
             </Link>
