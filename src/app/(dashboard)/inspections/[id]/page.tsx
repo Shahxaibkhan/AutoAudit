@@ -27,36 +27,38 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/inspections" className="text-slate-400 hover:text-slate-600 transition-colors">
+      <div className="flex items-start gap-3 mb-6">
+        <Link href="/inspections" className="text-slate-400 hover:text-slate-600 transition-colors mt-1 shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
             {inspection.vehicle.make} {inspection.vehicle.model}
-            <span className={`ml-3 text-sm font-semibold px-2.5 py-1 rounded-lg align-middle ${inspectionTypeBadge(inspection.type)}`}>
+          </h1>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${inspectionTypeBadge(inspection.type)}`}>
               {inspectionTypeLabel(inspection.type)}
             </span>
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">{formatDate(inspection.createdAt)}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">{formatDate(inspection.createdAt)}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {!isCompleted && (
             <Link
               href={`/inspections/${params.id}/capture`}
-              className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20"
+              className="flex items-center gap-1.5 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20"
             >
-              <Camera className="w-4 h-4" />
-              {inspection.images.length > 0 ? 'Continue Capture' : 'Start Capture'}
+              <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">{inspection.images.length > 0 ? 'Continue' : 'Start'}</span> Capture
             </Link>
           )}
           {isCompleted && (
             <Link
               href={`/inspections/${params.id}/report`}
-              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20"
+              className="flex items-center gap-1.5 sm:gap-2 bg-emerald-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20"
             >
-              <FileText className="w-4 h-4" />
-              View Report
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Report
             </Link>
           )}
         </div>

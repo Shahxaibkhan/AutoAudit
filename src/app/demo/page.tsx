@@ -160,14 +160,14 @@ function DemoLauncher({ industry }: { industry: string }) {
 
 function DemoSelector() {
   return (
-    <div className="min-h-screen mesh-bg flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen mesh-bg flex items-center justify-center px-4 py-12 sm:py-16">
       <div className="max-w-4xl w-full">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-teal-500/30">
             <ScanLine className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-4xl font-black text-white mb-3 tracking-tight">Choose your industry</h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">Choose your industry</h1>
+          <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto">
             AutoAuditAI works across 6 industries. Pick one to see a realistic demo loaded with sample data.
           </p>
         </div>

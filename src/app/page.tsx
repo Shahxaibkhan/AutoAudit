@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ScanLine, Shield, BarChart3, CheckCircle, ArrowRight, Zap, Star, ChevronRight, Gauge, Car, Building2, Truck, ShieldCheck, Wrench, FileText } from 'lucide-react'
+import MobileNav from '@/components/MobileNav'
 
 export default function LandingPage() {
   return (
@@ -7,7 +8,7 @@ export default function LandingPage() {
 
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/30">
               <ScanLine className="w-4 h-4 text-white" />
@@ -19,7 +20,7 @@ export default function LandingPage() {
               <a key={l} href={`#${l.toLowerCase()}`} className="text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">{l}</a>
             ))}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-3 py-1.5">
               Sign in
             </Link>
@@ -27,11 +28,12 @@ export default function LandingPage() {
               Get started <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
+          <MobileNav />
         </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section className="mesh-bg pt-32 pb-28 px-6 relative overflow-hidden">
+      <section className="mesh-bg pt-24 sm:pt-32 pb-16 sm:pb-28 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute top-24 left-1/3 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -41,30 +43,30 @@ export default function LandingPage() {
             Powered by Claude Vision AI
           </div>
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 leading-[1.05] tracking-tight">
-            Stop Losing Money<br />
-            on{' '}
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-5 sm:mb-6 leading-[1.08] sm:leading-[1.05] tracking-tight">
+            Stop Losing Money<br className="hidden sm:block" />
+            {' '}on{' '}
             <span className="relative inline-block">
               <span className="gradient-text">Disputed Damage</span>
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-400 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed">
             AI-powered vehicle inspection for rentals, dealers, fleets, insurance, body shops, and leasing. Capture, detect damage, and compare before/after in minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-teal-500 transition-all shadow-xl shadow-teal-500/25 hover:shadow-2xl hover:shadow-teal-500/30 hover:-translate-y-0.5">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2 sm:px-0">
+            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold hover:bg-teal-500 transition-all shadow-xl shadow-teal-500/25 hover:-translate-y-0.5">
               Start for free
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/demo" className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-white/12 transition-all backdrop-blur-sm">
+            <Link href="/demo" className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold hover:bg-white/12 transition-all backdrop-blur-sm">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               Live demo
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-12 flex-wrap">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-12 flex-wrap">
             {['No credit card', 'Setup in 5 minutes', 'Cancel anytime'].map(t => (
               <div key={t} className="flex items-center gap-1.5 text-slate-500 text-sm">
                 <CheckCircle className="w-3.5 h-3.5 text-teal-500" />
@@ -75,7 +77,7 @@ export default function LandingPage() {
         </div>
 
         {/* Dashboard preview */}
-        <div className="max-w-5xl mx-auto mt-20 relative animate-float">
+        <div className="max-w-5xl mx-auto mt-12 sm:mt-20 relative animate-float hidden sm:block">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-1 shadow-2xl glow-teal">
             <div className="bg-slate-900/90 rounded-xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 bg-slate-800/60 border-b border-white/5">
@@ -136,12 +138,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── SOCIAL PROOF ── */}
-      <section className="py-12 border-b border-slate-100 bg-white">
-        <div className="max-w-5xl mx-auto px-6 text-center">
+      <section className="py-8 sm:py-12 border-b border-slate-100 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           <p className="text-sm text-slate-400 font-medium uppercase tracking-wider mb-8">
             Trusted across industries in
           </p>
-          <div className="flex items-center justify-center gap-8 flex-wrap">
+          <div className="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
             {['Pakistan 🇵🇰', 'Indonesia 🇮🇩', 'Malaysia 🇲🇾', 'UAE 🇦🇪', 'Saudi Arabia 🇸🇦'].map(c => (
               <span key={c} className="text-base font-semibold text-slate-400 hover:text-slate-700 transition-colors cursor-default">{c}</span>
             ))}
@@ -150,7 +152,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 px-6 bg-white">
+      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-block text-teal-600 text-xs font-bold uppercase tracking-widest mb-4">Why AutoAuditAI</span>
@@ -230,7 +232,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHO IT'S FOR ── */}
-      <section id="industries" className="py-24 px-6 bg-slate-950 relative overflow-hidden">
+      <section id="industries" className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-950 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-teal-500/5 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none" />
         <div className="max-w-6xl mx-auto relative">
@@ -301,9 +303,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-24 px-6 bg-slate-50">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12 sm:mb-16">
             <span className="inline-block text-teal-600 text-xs font-bold uppercase tracking-widest mb-4">Process</span>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight">From inspection to report in minutes</h2>
           </div>
@@ -331,7 +333,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── TESTIMONIAL ── */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <div className="flex justify-center gap-1 mb-6">
             {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
@@ -350,7 +352,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 px-6 bg-slate-50">
+      <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <span className="inline-block text-teal-600 text-xs font-bold uppercase tracking-widest mb-4">Pricing</span>
@@ -360,7 +362,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 sm:mb-10">
             {[
               {
                 name: 'Starter',
@@ -407,7 +409,7 @@ export default function LandingPage() {
                 key={plan.name}
                 className={`relative rounded-2xl p-6 border transition-all ${
                   plan.highlight
-                    ? 'bg-teal-600 border-teal-500 shadow-xl shadow-teal-500/20 scale-[1.02]'
+                    ? 'bg-teal-600 border-teal-500 shadow-xl shadow-teal-500/20 ring-2 ring-teal-400/30'
                     : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
                 }`}
               >
@@ -460,16 +462,16 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-20 px-6 bg-slate-950 relative overflow-hidden">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-teal-900/20 to-transparent pointer-events-none" />
         <div className="max-w-3xl mx-auto text-center relative">
-          <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Start protecting your fleet today</h2>
-          <p className="text-slate-400 mb-8 text-lg">Join thousands of vehicle businesses using AI to eliminate damage disputes.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-teal-500 transition-all shadow-xl shadow-teal-500/25 hover:-translate-y-0.5">
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">Start protecting your fleet today</h2>
+          <p className="text-slate-400 mb-8 text-base sm:text-lg">Join thousands of vehicle businesses using AI to eliminate damage disputes.</p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold hover:bg-teal-500 transition-all shadow-xl shadow-teal-500/25 hover:-translate-y-0.5">
               Start for free <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/demo" className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-white/12 transition-all">
+            <Link href="/demo" className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base font-semibold hover:bg-white/12 transition-all">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               Try live demo
             </Link>
