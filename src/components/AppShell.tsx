@@ -3,15 +3,17 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap } from 'lucide-react'
+import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap, ShieldCheck } from 'lucide-react'
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
 
 const nav = [
-  { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/vehicles',     label: 'Vehicles',     icon: Car },
-  { href: '/inspections',  label: 'Inspections',  icon: ClipboardList },
-  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
+  { href: '/dashboard',         label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/vehicles',          label: 'Vehicles',     icon: Car },
+  { href: '/inspections',       label: 'Inspections',  icon: ClipboardList },
+  { href: '/dashboard/billing', label: 'Billing',      icon: CreditCard },
 ]
+
+const adminNav = { href: '/dashboard/admin', label: 'Admin', icon: ShieldCheck }
 
 type UsageInfo = {
   plan: string
@@ -21,27 +23,28 @@ type UsageInfo = {
   createdAt: string
 }
 
-function NavLinks({ usage, onNavigate }: { usage: UsageInfo | null; onNavigate?: () => void }) {
+function NavLinks({ usage, isAdmin, onNavigate }: { usage: UsageInfo | null; isAdmin: boolean; onNavigate?: () => void }) {
   const pathname = usePathname()
+  const allNav = isAdmin ? [...nav, adminNav] : nav
   return (
     <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
       <p className="px-3 text-xs font-semibold text-slate-600 uppercase tracking-widest mb-3">Main</p>
-      {nav.map(({ href, label, icon: Icon }) => {
+      {allNav.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
-        const isBilling = href === '/dashboard/billing'
+        const isAdminLink = href === '/dashboard/admin'
         return (
           <Link key={href} href={href} onClick={onNavigate}
             className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
               active
-                ? 'bg-teal-500/15 text-teal-400 border border-teal-500/20'
+                ? isAdminLink ? 'bg-violet-500/15 text-violet-400 border border-violet-500/20' : 'bg-teal-500/15 text-teal-400 border border-teal-500/20'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center gap-3">
-              <Icon className={`w-4 h-4 ${active ? 'text-teal-400' : isBilling ? 'text-slate-500 group-hover:text-slate-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
+              <Icon className={`w-4 h-4 ${active ? (isAdminLink ? 'text-violet-400' : 'text-teal-400') : 'text-slate-500 group-hover:text-slate-300'}`} />
               {label}
             </div>
-            {active && <ChevronRight className="w-3.5 h-3.5 text-teal-500" />}
+            {active && <ChevronRight className={`w-3.5 h-3.5 ${isAdminLink ? 'text-violet-500' : 'text-teal-500'}`} />}
           </Link>
         )
       })}
@@ -107,9 +110,11 @@ function UserFooter({ user, onAction }: { user: { name?: string | null; email?: 
 
 export default function AppShell({
   user,
+  isAdmin = false,
   children,
 }: {
   user: { name?: string | null; email?: string | null }
+  isAdmin?: boolean
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -138,7 +143,7 @@ export default function AppShell({
             <span className="text-base font-black text-white tracking-tight">AutoAuditAI</span>
           </Link>
         </div>
-        <NavLinks usage={usage} />
+        <NavLinks usage={usage} isAdmin={isAdmin} />
         <UserFooter user={user} />
       </aside>
 
@@ -160,7 +165,7 @@ export default function AppShell({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <NavLinks usage={usage} onNavigate={() => setMobileOpen(false)} />
+        <NavLinks usage={usage} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
         <UserFooter user={user} onAction={() => setMobileOpen(false)} />
       </aside>
 

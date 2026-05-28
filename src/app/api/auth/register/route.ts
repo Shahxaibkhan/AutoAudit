@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         plan: 'TRIAL',
         trialEndsAt,
         creditsUsed: 0,
-        creditsTotal: 50,
+        creditsTotal: 3,
         creditsPeriodStart: new Date(),
       },
     })
