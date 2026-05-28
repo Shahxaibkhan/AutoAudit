@@ -3,21 +3,32 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X } from 'lucide-react'
+import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap } from 'lucide-react'
+import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
 
 const nav = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/vehicles', label: 'Vehicles', icon: Car },
-  { href: '/inspections', label: 'Inspections', icon: ClipboardList },
+  { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/vehicles',     label: 'Vehicles',     icon: Car },
+  { href: '/inspections',  label: 'Inspections',  icon: ClipboardList },
+  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
 ]
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+type UsageInfo = {
+  plan: string
+  creditsUsed: number
+  creditsTotal: number
+  trialEndsAt: string | null
+  createdAt: string
+}
+
+function NavLinks({ usage, onNavigate }: { usage: UsageInfo | null; onNavigate?: () => void }) {
   const pathname = usePathname()
   return (
-    <nav className="flex-1 px-3 py-4 space-y-0.5">
+    <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
       <p className="px-3 text-xs font-semibold text-slate-600 uppercase tracking-widest mb-3">Main</p>
       {nav.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))
+        const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+        const isBilling = href === '/dashboard/billing'
         return (
           <Link key={href} href={href} onClick={onNavigate}
             className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -27,13 +38,45 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             }`}
           >
             <div className="flex items-center gap-3">
-              <Icon className={`w-4 h-4 ${active ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+              <Icon className={`w-4 h-4 ${active ? 'text-teal-400' : isBilling ? 'text-slate-500 group-hover:text-slate-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
               {label}
             </div>
             {active && <ChevronRight className="w-3.5 h-3.5 text-teal-500" />}
           </Link>
         )
       })}
+
+      {/* Usage pill in sidebar */}
+      {usage && (
+        <div className="mt-4 mx-1 bg-white/5 rounded-xl p-3 border border-white/8">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-slate-400">
+              {PLANS[usage.plan as keyof typeof PLANS]?.name ?? 'Trial'}
+            </span>
+            {usage.plan === 'TRIAL' && (
+              <span className="text-xs text-teal-400 font-semibold">
+                {trialDaysLeft(usage.trialEndsAt ? new Date(usage.trialEndsAt) : null, new Date(usage.createdAt))}d left
+              </span>
+            )}
+          </div>
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-1">
+            {(() => {
+              const pct = usage.creditsTotal === 999999 ? 5 : Math.min(100, (usage.creditsUsed / usage.creditsTotal) * 100)
+              return (
+                <div
+                  className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-400' : 'bg-teal-500'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              )
+            })()}
+          </div>
+          <p className="text-xs text-slate-600">
+            {usage.creditsTotal === 999999
+              ? 'Unlimited'
+              : `${creditsRemaining(usage.creditsUsed, usage.creditsTotal)} / ${usage.creditsTotal} analyses left`}
+          </p>
+        </div>
+      )}
     </nav>
   )
 }
@@ -70,10 +113,17 @@ export default function AppShell({
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [usage, setUsage] = useState<UsageInfo | null>(null)
   const pathname = usePathname()
 
-  // Close drawer on route change
   useEffect(() => { setMobileOpen(false) }, [pathname])
+
+  useEffect(() => {
+    fetch('/api/billing/usage')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setUsage(d))
+      .catch(() => {})
+  }, [pathname]) // refresh on navigation so credits update after analysis
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -88,22 +138,17 @@ export default function AppShell({
             <span className="text-base font-black text-white tracking-tight">AutoAuditAI</span>
           </Link>
         </div>
-        <NavLinks />
+        <NavLinks usage={usage} />
         <UserFooter user={user} />
       </aside>
 
-      {/* ── Mobile drawer overlay ── */}
+      {/* ── Mobile overlay ── */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* ── Mobile drawer ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col md:hidden transition-transform duration-300 ${
-        mobileOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col md:hidden transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="px-5 py-5 border-b border-white/5 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
             <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/30">
@@ -115,7 +160,7 @@ export default function AppShell({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <NavLinks onNavigate={() => setMobileOpen(false)} />
+        <NavLinks usage={usage} onNavigate={() => setMobileOpen(false)} />
         <UserFooter user={user} onAction={() => setMobileOpen(false)} />
       </aside>
 
@@ -123,10 +168,7 @@ export default function AppShell({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile top bar */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shrink-0">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-2 -ml-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
-          >
+          <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
             <Menu className="w-5 h-5" />
           </button>
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -135,7 +177,13 @@ export default function AppShell({
             </div>
             <span className="text-sm font-black text-slate-900">AutoAuditAI</span>
           </Link>
-          <div className="w-9" />
+          {/* Mobile credits pill */}
+          {usage && (
+            <Link href="/dashboard/billing" className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full text-xs font-bold">
+              <Zap className="w-3 h-3" />
+              {usage.creditsTotal === 999999 ? '∞' : creditsRemaining(usage.creditsUsed, usage.creditsTotal)}
+            </Link>
+          )}
         </div>
 
         <main className="flex-1 overflow-y-auto">

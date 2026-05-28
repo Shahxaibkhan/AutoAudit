@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { compareInspections } from '@/lib/claude'
+import { canAnalyze } from '@/lib/subscription'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,16 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as { id: string }).id
+
+  // Credit / subscription check
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  const check = canAnalyze(user)
+  if (!check.allowed) {
+    return NextResponse.json({ error: 'limit_reached', reason: check.reason }, { status: 402 })
+  }
+
   const { postInspectionId } = await req.json()
 
   const postInspection = await prisma.inspection.findFirst({
@@ -50,7 +61,6 @@ export async function POST(req: Request) {
       const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
 
       const result = await compareInspections(base64, preDamages, mimeType)
-
       for (const dmg of result.newDamages) {
         allNewDamages.push({ ...dmg, isNew: true })
         totalNewCost += dmg.estimatedCost || 0
@@ -64,8 +74,8 @@ export async function POST(req: Request) {
     newDamages: allNewDamages,
     existingDamages: preDamages,
     summary: allNewDamages.length > 0
-      ? `${allNewDamages.length} new damage(s) detected after rental. Estimated repair cost: $${totalNewCost.toFixed(2)}.`
-      : 'No new damage detected. Car returned in same condition as rented.',
+      ? `${allNewDamages.length} new damage(s) detected. Estimated repair cost: $${totalNewCost.toFixed(2)}.`
+      : 'No new damage detected. Vehicle returned in same condition.',
     hasNewDamage: allNewDamages.length > 0,
     totalNewDamageCost: totalNewCost,
   }
@@ -74,34 +84,17 @@ export async function POST(req: Request) {
     prisma.damage.deleteMany({ where: { inspectionId: postInspectionId } }),
     ...allNewDamages.map(d =>
       prisma.damage.create({
-        data: {
-          inspectionId: postInspectionId,
-          type: d.type,
-          severity: d.severity,
-          location: d.location,
-          description: d.description,
-          estimatedCost: d.estimatedCost,
-          isNew: true,
-        },
+        data: { inspectionId: postInspectionId, type: d.type, severity: d.severity, location: d.location, description: d.description, estimatedCost: d.estimatedCost, isNew: true },
       })
     ),
     ...preDamages.map(d =>
       prisma.damage.create({
-        data: {
-          inspectionId: postInspectionId,
-          type: d.type,
-          severity: d.severity,
-          location: d.location,
-          description: d.description,
-          estimatedCost: d.estimatedCost,
-          isNew: false,
-        },
+        data: { inspectionId: postInspectionId, type: d.type, severity: d.severity, location: d.location, description: d.description, estimatedCost: d.estimatedCost, isNew: false },
       })
     ),
-    prisma.inspection.update({
-      where: { id: postInspectionId },
-      data: { status: 'COMPLETED', aiReport: JSON.stringify(comparisonReport) },
-    }),
+    prisma.inspection.update({ where: { id: postInspectionId }, data: { status: 'COMPLETED', aiReport: JSON.stringify(comparisonReport) } }),
+    // Consume one credit
+    prisma.user.update({ where: { id: userId }, data: { creditsUsed: { increment: 1 } } }),
   ])
 
   return NextResponse.json(comparisonReport)
