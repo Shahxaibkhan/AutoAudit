@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { analyzeCarImage } from '@/lib/claude'
 import { canAnalyze } from '@/lib/subscription'
+import { runInspectionPipeline } from '@/lib/pipeline'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300 // Vercel Pro: allow up to 5 minutes for pipeline
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
   const { inspectionId } = await req.json()
   if (!inspectionId) return NextResponse.json({ error: 'inspectionId required' }, { status: 400 })
 
-  // Credit / subscription check
+  // Credit check
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
@@ -26,63 +27,91 @@ export async function POST(req: Request) {
 
   const inspection = await prisma.inspection.findFirst({
     where: { id: inspectionId, userId },
-    include: { images: true },
+    include: { images: true, vehicle: true },
   })
   if (!inspection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (inspection.images.length === 0) return NextResponse.json({ error: 'No images uploaded' }, { status: 400 })
 
   await prisma.inspection.update({ where: { id: inspectionId }, data: { status: 'IN_PROGRESS' } })
 
-  const allDamages: Array<{
-    type: string; severity: string; location: string; description: string; estimatedCost?: number; isNew: boolean
-  }> = []
-  const allRecommendations: string[] = []
-  let worstCondition = 'excellent'
-  let totalCost = 0
-  const conditionRank = { excellent: 0, good: 1, fair: 2, poor: 3 }
-
-  for (const image of inspection.images) {
-    try {
-      const imgRes = await fetch(image.url)
-      const buffer = Buffer.from(await imgRes.arrayBuffer())
-      const base64 = buffer.toString('base64')
-      const ext = image.url.split('.').pop()?.split('?')[0]?.toLowerCase() || 'jpeg'
-      const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
-
-      const result = await analyzeCarImage(base64, mimeType)
-      for (const dmg of result.damages) {
-        allDamages.push({ ...dmg, isNew: false })
-        totalCost += dmg.estimatedCost || 0
-      }
-      allRecommendations.push(...result.recommendations)
-      if ((conditionRank[result.overallCondition] || 0) > (conditionRank[worstCondition as keyof typeof conditionRank] || 0)) {
-        worstCondition = result.overallCondition
-      }
-    } catch (err) {
-      console.error(`Failed to analyze image ${image.id}:`, err)
+  try {
+    const imageUrls = inspection.images.map(img => img.url)
+    const vehicleInfo = {
+      make: inspection.vehicle.make,
+      model: inspection.vehicle.model,
+      year: inspection.vehicle.year,
+      licensePlate: inspection.vehicle.licensePlate,
     }
+
+    const result = await runInspectionPipeline(imageUrls, vehicleInfo, inspection.type)
+
+    // Build legacy-compatible aiReport JSON (keeps report page working)
+    const aiReport = {
+      overallCondition: result.report.conditionLabel.toLowerCase(),
+      overallScore: result.report.overallScore,
+      letterGrade: result.report.letterGrade,
+      damages: result.damages.map(d => ({
+        type: d.type,
+        severity: d.severity,
+        location: d.location,
+        description: d.description,
+        estimatedCost: Math.round(d.estimatedCostPKR / 280), // approx USD
+        estimatedCostPKR: d.estimatedCostPKR,
+        isNew: false,
+        confidence: d.confidence,
+        frameCount: d.frameCount,
+        panelCode: d.panelCode,
+      })),
+      summary: result.report.executiveSummary,
+      recommendation: result.report.recommendation,
+      recommendations: result.report.nextSteps,
+      totalEstimatedCost: result.damages.reduce((s, d) => s + Math.round(d.estimatedCostPKR / 280), 0),
+      totalEstimatedCostPKR: result.report.totalRepairCostPKR,
+      coverageStatement: result.report.coverageStatement,
+      confidenceLevel: result.report.confidenceLevel,
+      framesAnalyzed: result.framesAnalyzed,
+      qualityScore: result.qualityScore,
+      disclaimer: result.report.disclaimer,
+    }
+
+    await prisma.$transaction([
+      prisma.damage.deleteMany({ where: { inspectionId } }),
+      ...result.damages.map(d =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (prisma.damage.create as any)({
+          data: {
+            inspectionId,
+            type: d.type,
+            severity: d.severity,
+            location: d.location,
+            description: d.description,
+            estimatedCost: Math.round(d.estimatedCostPKR / 280),
+            imageUrl: d.imageUrl,
+            isNew: false,
+            confidence: d.confidence,
+            frameCount: d.frameCount,
+            panelCode: d.panelCode,
+          },
+        })
+      ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma.inspection.update as any)({
+        where: { id: inspectionId },
+        data: {
+          status: 'COMPLETED',
+          aiReport: JSON.stringify(aiReport),
+          qualityScore: result.qualityScore,
+          framesAnalyzed: result.framesAnalyzed,
+          overallGrade: result.overallGrade,
+        },
+      }),
+      prisma.user.update({ where: { id: userId }, data: { creditsUsed: { increment: 1 } } }),
+    ])
+
+    return NextResponse.json(aiReport)
+  } catch (err) {
+    await prisma.inspection.update({ where: { id: inspectionId }, data: { status: 'PENDING' } })
+    console.error('Pipeline error:', err)
+    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
-
-  const uniqueRecommendations = allRecommendations.filter((v, i, a) => a.indexOf(v) === i)
-  const aiReport = {
-    overallCondition: worstCondition,
-    damages: allDamages,
-    summary: `Inspection completed. ${allDamages.length} damage item(s) found. Overall condition: ${worstCondition}.`,
-    recommendations: uniqueRecommendations,
-    totalEstimatedCost: totalCost,
-  }
-
-  await prisma.$transaction([
-    prisma.damage.deleteMany({ where: { inspectionId } }),
-    ...allDamages.map(d =>
-      prisma.damage.create({
-        data: { inspectionId, type: d.type, severity: d.severity, location: d.location, description: d.description, estimatedCost: d.estimatedCost, isNew: false },
-      })
-    ),
-    prisma.inspection.update({ where: { id: inspectionId }, data: { status: 'COMPLETED', aiReport: JSON.stringify(aiReport) } }),
-    // Consume one credit
-    prisma.user.update({ where: { id: userId }, data: { creditsUsed: { increment: 1 } } }),
-  ])
-
-  return NextResponse.json(aiReport)
 }

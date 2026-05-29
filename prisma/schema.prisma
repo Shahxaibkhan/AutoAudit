@@ -90,6 +90,7 @@ model Inspection {
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   type             String            // PRE_RENTAL | POST_RENTAL
   status           String            @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED
+  captureMode      String            @default("PHOTO") // PHOTO | VIDEO
   renterName       String?
   renterPhone      String?
   renterEmail      String?
@@ -98,6 +99,9 @@ model Inspection {
   notes            String?
   aiReport         String?
   preInspectionId  String?
+  qualityScore     Float?
+  framesAnalyzed   Int?
+  overallGrade     String?
   images           InspectionImage[]
   damages          Damage[]
   createdAt        DateTime          @default(now())
@@ -109,7 +113,7 @@ model InspectionImage {
   inspectionId String
   inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
   url          String
-  angle        String     // front | rear | left | right | left_front | right_front | left_rear | right_rear | interior | roof | other
+  angle        String     // front | rear | left | right | left_front | right_front | left_rear | right_rear | interior | roof | other | frame_NNN
   createdAt    DateTime   @default(now())
 }
 
@@ -117,12 +121,15 @@ model Damage {
   id             String     @id @default(cuid())
   inspectionId   String
   inspection     Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-  type           String     // scratch | dent | crack | paint_chip | broken | missing | other
+  type           String     // scratch | dent | crack | paint_chip | rust | broken | missing | other
   severity       String     // minor | moderate | severe
   location       String
   description    String
   imageUrl       String?
   isNew          Boolean    @default(false)
   estimatedCost  Float?
+  confidence     Float?
+  frameCount     Int        @default(1)
+  panelCode      String?
   createdAt      DateTime   @default(now())
 }
