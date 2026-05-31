@@ -231,7 +231,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: 'PKR 80k+', label: 'avg dispute value recovered', sub: 'per incident' },
-              { value: '3 min', label: 'full 8-angle inspection', sub: 'on any smartphone' },
+              { value: '3 min', label: 'video or photo inspection', sub: 'on any smartphone' },
               { value: '6+', label: 'damage types detected', sub: 'scratches, dents, cracks & more' },
               { value: '50+', label: 'businesses in Pakistan', sub: 'and growing' },
             ].map(s => (
@@ -266,9 +266,9 @@ export default function LandingPage() {
                 color: 'from-teal-500 to-teal-600',
                 glow: 'shadow-teal-500/25',
                 border: 'hover:border-teal-500/30',
-                title: 'Guided Photo Capture',
-                desc: '8-angle walkaround with live guidance. Front, rear, both sides, and all four corners — systematically documented in under 3 minutes on any phone.',
-                points: ['Works on any smartphone', 'No special equipment', 'Offline-ready capture'],
+                title: 'Video or Photo Capture',
+                desc: 'Record a 60-second video walkaround and let AI extract the best frames automatically — or use guided 8-angle photos. Both modes work on any smartphone.',
+                points: ['Video mode: AI picks best 35 frames', '8-photo guided mode as fallback', 'Blur & quality filtering built in'],
               },
               {
                 icon: Zap,
@@ -349,8 +349,8 @@ export default function LandingPage() {
               },
               {
                 n: '02',
-                title: 'Capture photos with guidance',
-                desc: 'Follow the guided 8-angle walkaround on your smartphone. Front, rear, both sides, and all four corners — systematically documented.',
+                title: 'Record a video or take 8 photos',
+                desc: 'Walk around the car for 60 seconds while recording — AI automatically extracts the sharpest, most distinct frames. Prefer photos? A guided 8-angle mode has you covered too.',
                 color: 'from-indigo-600 to-indigo-700',
               },
               {
@@ -623,7 +623,7 @@ export default function LandingPage() {
               },
               {
                 q: 'Can I use this on my phone?',
-                a: 'Yes. AutoAuditAI is fully mobile-optimized. You capture photos on your smartphone and the AI analyzes them instantly in the browser. No app download required.',
+                a: 'Yes. AutoAuditAI is fully mobile-optimized. Record a 60-second video walkaround or take 8 guided photos — all from your smartphone browser. No app download required. Android and iOS both supported.',
               },
               {
                 q: 'Is the PDF report legally valid?',
