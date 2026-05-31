@@ -73,7 +73,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <p className="text-slate-600 text-xs relative z-10">© 2024 AutoAuditAI</p>
+        <p className="text-slate-600 text-xs relative z-10">© 2026 AutoAuditAI</p>
       </div>
 
       {/* Right — form */}

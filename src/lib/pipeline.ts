@@ -2,10 +2,13 @@
  * Inspection AI pipeline
  *
  * With Roboflow configured:
- *   images → YOLO (batch) → Claude Haiku panel ID → Claude Sonnet verify → consensus → Claude Sonnet report
+ *   images → YOLO (batch) → AI panel ID → AI verify → consensus → AI report
  *
  * Without Roboflow:
- *   images → Claude Haiku direct analysis (per image, parallel) → consensus → Claude Sonnet report
+ *   images → AI direct analysis (per image, parallel) → consensus → AI report
+ *
+ * AI backend: Claude (ANTHROPIC_API_KEY) or Gemini 2.5 Flash (GOOGLE_AI_KEY)
+ * Set in ai-provider.ts — pipeline is provider-agnostic.
  */
 
 import { detectDamageBatch, roboflowConfigured, type YoloDetection } from './roboflow'
@@ -14,8 +17,8 @@ import {
   identifyPanel,
   verifyDamage,
   generateInspectionReport,
-  type FinalReport,
-} from './claude'
+} from './ai-provider'
+import type { FinalReport } from './claude'
 
 /* ─── types ─────────────────────────────────────────────────────────── */
 

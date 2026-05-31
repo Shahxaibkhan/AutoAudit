@@ -91,8 +91,8 @@ export default function BillingPage() {
       <div className="space-y-4 animate-pulse">
         <div className="h-8 bg-slate-100 rounded-xl w-48" />
         <div className="h-32 bg-slate-100 rounded-2xl" />
-        <div className="grid grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-64 bg-slate-100 rounded-2xl" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-64 bg-slate-100 rounded-2xl" />)}
         </div>
       </div>
     )
@@ -109,7 +109,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Billing & Usage</h1>
           <p className="text-slate-400 text-sm mt-1">Manage your plan and AI inspection credits</p>
@@ -118,7 +118,7 @@ export default function BillingPage() {
           <button
             onClick={openPortal}
             disabled={openingPortal}
-            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 shadow-sm transition-all"
+            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 shadow-sm transition-all shrink-0"
           >
             <CreditCard className="w-4 h-4" />
             {openingPortal ? 'Opening…' : 'Manage subscription'}
@@ -128,10 +128,10 @@ export default function BillingPage() {
 
       {/* Current plan card */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Current plan</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-2xl font-black text-slate-900">{planInfo.name}</span>
               {plan === 'TRIAL' && (
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${daysLeft <= 3 ? 'bg-red-50 text-red-700' : 'bg-teal-50 text-teal-700'}`}>
@@ -143,7 +143,7 @@ export default function BillingPage() {
             </div>
           </div>
           {data.subPeriodEnd && isActive && (
-            <div className="text-right text-sm text-slate-400">
+            <div className="text-sm text-slate-400 shrink-0">
               <p>Next renewal</p>
               <p className="font-semibold text-slate-700">{new Date(data.subPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
             </div>

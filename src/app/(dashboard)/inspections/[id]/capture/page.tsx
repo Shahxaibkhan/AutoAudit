@@ -96,17 +96,26 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<File[]> {
   })
 }
 
+/* ─── iOS detection ──────────────────────────────────────────────────── */
+
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+}
+
 /* ─── component ─────────────────────────────────────────────────────── */
 
 export default function CapturePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const iosVideoInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const brightnessCanvasRef = useRef<HTMLCanvasElement>(null)
 
+  const [iosDevice, setIosDevice] = useState(false)
   const [mode, setMode] = useState<CaptureMode>('select')
   const [videoState, setVideoState] = useState<VideoState>('checklist')
 
@@ -130,6 +139,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   } | null>(null)
 
   useEffect(() => {
+    setIosDevice(isIOS())
     fetch(`/api/inspections/${params.id}`)
       .then(r => r.json())
       .then(d => {
@@ -302,6 +312,40 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  /* ── iOS native video handler ────────────────────────────────────── */
+  async function handleIosVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!iosVideoInputRef.current) iosVideoInputRef.current = e.target as HTMLInputElement
+    if (iosVideoInputRef.current) iosVideoInputRef.current.value = ''
+    if (!file) return
+
+    setMode('video')
+    setVideoState('extracting')
+    setExtracting(true)
+    toast('Extracting best frames from video…', { icon: '⚙️' })
+
+    const frames = await extractFrames(file, 35)
+    if (frames.length === 0) {
+      toast.error('Could not read video — please try photo mode instead')
+      setMode('select')
+      setExtracting(false)
+      return
+    }
+
+    const previews = await Promise.all(
+      frames.slice(0, 9).map(f => new Promise<string>(res => {
+        const reader = new FileReader()
+        reader.onload = ev => res(ev.target?.result as string)
+        reader.readAsDataURL(f)
+      }))
+    )
+
+    setExtractedFrames(frames)
+    setFramePreviews(previews)
+    setExtracting(false)
+    setVideoState('review')
+  }
+
   /* ── AI analysis ─────────────────────────────────────────────────── */
   async function runAnalysis(images?: UploadedImage[]) {
     const all = images ?? uploadedImages
@@ -384,17 +428,34 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         <div className="space-y-3">
           <p className="text-slate-500 text-sm mb-5">Choose how to capture this inspection:</p>
 
-          <button onClick={() => { setMode('video'); startCamera() }}
+          {/* Hidden iOS video file input */}
+          {iosDevice && (
+            <input
+              ref={iosVideoInputRef}
+              type="file"
+              accept="video/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleIosVideoSelect}
+            />
+          )}
+
+          <button
+            onClick={() => iosDevice ? iosVideoInputRef.current?.click() : (setMode('video'), startCamera())}
             className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
             <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
               <Video className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <div className="font-bold text-slate-900 flex items-center gap-2">
-                Video walkround
+                Video walkaround
                 <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
               </div>
-              <p className="text-sm text-slate-500 mt-0.5">Record a 60-second walk around. AI extracts the best frames automatically.</p>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {iosDevice
+                  ? 'Opens your iPhone camera. Record a walkaround — AI extracts frames automatically.'
+                  : 'Record a 60-second walk around. AI extracts the best frames automatically.'}
+              </p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
           </button>
@@ -406,7 +467,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             </div>
             <div className="flex-1">
               <div className="font-bold text-slate-900">8-photo guide</div>
-              <p className="text-sm text-slate-500 mt-0.5">Take 8 guided photos from specific angles. Good for older phones or slow networks.</p>
+              <p className="text-sm text-slate-500 mt-0.5">Take 8 guided photos from specific angles. Good for slow networks.</p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-400 transition-colors" />
           </button>
@@ -561,7 +622,17 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => { setExtractedFrames([]); setFramePreviews([]); setElapsed(0); startCamera() }}
+              <button onClick={() => {
+                  setExtractedFrames([])
+                  setFramePreviews([])
+                  setElapsed(0)
+                  if (iosDevice) {
+                    setMode('select')
+                    setVideoState('checklist')
+                  } else {
+                    startCamera()
+                  }
+                }}
                 className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                 <RotateCcw className="w-4 h-4" /> Retake
               </button>
