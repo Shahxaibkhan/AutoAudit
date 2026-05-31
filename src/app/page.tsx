@@ -635,7 +635,7 @@ export default function LandingPage() {
               },
               {
                 q: 'What if I want a custom plan or volume pricing?',
-                a: 'Contact us directly via WhatsApp (+92-XXX-XXXXXXX) or through the Enterprise pricing option above. We offer custom pricing for large fleets, insurance companies, and multi-branch dealerships.',
+                a: 'Contact us directly via WhatsApp (+92-343-4994409) or through the Enterprise pricing option above. We offer custom pricing for large fleets, insurance companies, and multi-branch dealerships.',
               },
             ].map((faq) => (
               <details key={faq.q} className="group border border-slate-200 rounded-2xl bg-white overflow-hidden">
@@ -670,7 +670,7 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center gap-2 bg-teal-500 text-slate-950 px-8 py-4 rounded-2xl text-base font-bold hover:bg-teal-400 transition-all shadow-2xl shadow-teal-500/25 hover:-translate-y-0.5">
               Start free — 3 inspections <ArrowRight className="w-4 h-4" />
             </Link>
-            <a href="https://wa.me/923000000000"
+            <a href="https://wa.me/923434994409"
               className="inline-flex items-center justify-center gap-2 bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] px-8 py-4 rounded-2xl text-base font-semibold hover:bg-[#25D366]/15 transition-all">
               <MessageCircle className="w-4 h-4" />
               WhatsApp us
@@ -678,8 +678,8 @@ export default function LandingPage() {
           </div>
           <p className="text-slate-600 text-sm">
             Prefer a call?{' '}
-            <a href="tel:+923000000000" className="text-slate-400 hover:text-white transition-colors font-medium">
-              +92-XXX-XXXXXXX
+            <a href="tel:+923434994409" className="text-slate-400 hover:text-white transition-colors font-medium">
+              +92-343-4994409
             </a>
             {' '}· Available 9am–6pm PKT
           </p>
@@ -701,7 +701,7 @@ export default function LandingPage() {
               <p className="text-slate-500 text-xs leading-relaxed">
                 Pakistan&apos;s most trusted AI vehicle inspection platform — for buyers, sellers, and businesses.
               </p>
-              <a href="https://wa.me/923000000000"
+              <a href="https://wa.me/923434994409"
                 className="inline-flex items-center gap-2 mt-4 text-xs text-[#25D366]/80 hover:text-[#25D366] transition-colors font-medium">
                 <MessageCircle className="w-3.5 h-3.5" />
                 Chat on WhatsApp
@@ -737,15 +737,15 @@ export default function LandingPage() {
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-4">Contact</div>
               <div className="space-y-2.5">
-                <a href="https://wa.me/923000000000"
+                <a href="https://wa.me/923434994409"
                   className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors">
                   <MessageCircle className="w-3.5 h-3.5" />
                   WhatsApp
                 </a>
-                <a href="tel:+923000000000"
+                <a href="tel:+923434994409"
                   className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors">
                   <Phone className="w-3.5 h-3.5" />
-                  +92-XXX-XXXXXXX
+                  +92-343-4994409
                 </a>
                 <div className="flex items-center gap-2 text-slate-600 text-sm">
                   <span>🇵🇰</span> Pakistan
