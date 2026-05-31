@@ -24,9 +24,24 @@ export async function POST(req: Request) {
   if (!inspection) return NextResponse.json({ error: 'Inspection not found' }, { status: 404 })
 
   const ext = file.name.split('.').pop() || 'jpg'
-  const blob = await put(`inspections/${inspectionId}/${angle}-${Date.now()}.${ext}`, file, {
-    access: 'public',
-  })
+
+  let blob: { url: string }
+  try {
+    blob = await put(`inspections/${inspectionId}/${angle}-${Date.now()}.${ext}`, file, {
+      access: 'public',
+    })
+  } catch (blobErr) {
+    const msg = blobErr instanceof Error ? blobErr.message : 'Upload failed'
+    console.error('Blob upload error:', msg)
+    // Private store? Surface a clear message instead of crashing
+    if (msg.includes('private store')) {
+      return NextResponse.json(
+        { error: 'Image storage is misconfigured: Blob store must be set to public access. Go to Vercel Dashboard → Storage → Blob and recreate the store with public access.' },
+        { status: 500 }
+      )
+    }
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
 
   const image = await prisma.inspectionImage.create({
     data: { inspectionId, url: blob.url, angle },
