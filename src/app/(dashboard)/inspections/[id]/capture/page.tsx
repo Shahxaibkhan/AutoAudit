@@ -111,6 +111,47 @@ function hammingDistance(a: Uint8Array, b: Uint8Array): number {
 // keeping frames that show a meaningfully different view of the car.
 const DUPLICATE_THRESHOLD = 12
 
+/* ─── photo quality check (used for 8-photo mode) ───────────────────── */
+
+interface PhotoQualityResult {
+  brightness: number    // 0–255
+  sharpness: number     // 0–100
+  tooDark: boolean      // brightness < 15 (basically black)
+  tooBlurry: boolean    // sharpness < 12 (heavy blur)
+  warning: string | null  // soft warning message, null if ok
+}
+
+async function checkPhotoQuality(file: File): Promise<PhotoQualityResult> {
+  return new Promise(resolve => {
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const img = new window.Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = 160; canvas.height = 90
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, 160, 90)
+
+        const brightness = getAverageBrightness(ctx, 160, 90)
+        const lapVar = getLaplacianVariance(ctx, 160, 90)
+        const sharp = sharpnessScore(lapVar)
+
+        const tooDark = brightness < 15
+        const tooBlurry = sharp < 12
+
+        let warning: string | null = null
+        if (brightness < 40) warning = 'Photo is too dark — move to better light and retake'
+        else if (brightness > 225) warning = 'Photo is overexposed — avoid pointing at bright light'
+        else if (sharp < 25) warning = 'Photo looks blurry — hold steady and retake for best results'
+
+        resolve({ brightness, sharpness: sharp, tooDark, tooBlurry, warning })
+      }
+      img.src = ev.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export interface FrameQuality {
   files: File[]
   avgSharpness: number   // 0–100
@@ -426,6 +467,25 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     setUploading(true)
     for (const file of files) {
       try {
+        // Quality check before upload
+        const quality = await checkPhotoQuality(file)
+        if (quality.tooDark) {
+          toast.error('Photo is too dark — please retake in better lighting', { duration: 4000 })
+          setUploading(false)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+          return
+        }
+        if (quality.tooBlurry) {
+          toast.error('Photo is too blurry — hold steady and retake', { duration: 4000 })
+          setUploading(false)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+          return
+        }
+        if (quality.warning) {
+          toast(quality.warning, { icon: '⚠️', duration: 4000 })
+          // Soft warning — still upload
+        }
+
         const fd = new FormData()
         fd.append('file', file)
         fd.append('inspectionId', params.id)
@@ -439,7 +499,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         })
         const next = PHOTO_ANGLES.find(a => !uploadedImages.some(i => i.angle === a.key) && a.key !== currentAngle)
         if (next) setCurrentAngle(next.key)
-        toast.success(`${currentAngle.replace(/_/g, ' ')} uploaded`)
+        toast.success(`${currentAngle.replace(/_/g, ' ')} captured`)
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Upload failed')
       }
