@@ -4,9 +4,110 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
-import { formatDate, formatCurrency, severityColor, conditionColor, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
+import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
 import DownloadReportButton from '@/components/DownloadReportButton'
+
+const PANEL_LABELS: Record<string, string> = {
+  front_bumper: 'Front Bumper',
+  hood: 'Hood',
+  windshield: 'Windshield',
+  roof: 'Roof',
+  trunk_lid: 'Trunk / Boot',
+  rear_bumper: 'Rear Bumper',
+  rear_window: 'Rear Window',
+  driver_door: 'Driver Door',
+  passenger_door: 'Passenger Door',
+  rear_driver_door: 'Rear Driver Door',
+  rear_passenger_door: 'Rear Passenger Door',
+  front_left_fender: 'Front Left Fender',
+  front_right_fender: 'Front Right Fender',
+  rear_left_quarter: 'Rear Left Quarter',
+  rear_right_quarter: 'Rear Right Quarter',
+  driver_mirror: 'Driver Mirror',
+  passenger_mirror: 'Passenger Mirror',
+  driver_rocker: 'Driver Sill',
+  passenger_rocker: 'Passenger Sill',
+  other: 'Other',
+}
+
+function gradeColor(grade: string): string {
+  switch ((grade || '').toUpperCase()) {
+    case 'A': return 'bg-emerald-500'
+    case 'B': return 'bg-teal-500'
+    case 'C': return 'bg-amber-500'
+    case 'D': return 'bg-orange-500'
+    default:  return 'bg-red-500'
+  }
+}
+
+function severityStyle(severity: string): string {
+  switch ((severity || '').toLowerCase()) {
+    case 'severe':   return 'bg-red-100 text-red-700'
+    case 'moderate': return 'bg-amber-100 text-amber-700'
+    default:         return 'bg-slate-100 text-slate-600'
+  }
+}
+
+function panelLabel(code: string): string {
+  return PANEL_LABELS[code] || code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+type Damage = {
+  id: string
+  panelCode: string | null
+  severity: string
+  type: string
+  description: string | null
+  location: string | null
+  isNew: boolean
+}
+
+function groupByPanel(damages: Damage[]): Map<string, Damage[]> {
+  const map = new Map<string, Damage[]>()
+  for (const d of damages) {
+    const key = d.panelCode || 'other'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(d)
+  }
+  return map
+}
+
+function DamageCard({ d }: { d: Damage }) {
+  return (
+    <div className="flex items-start gap-2.5 py-2">
+      <span className={`mt-0.5 shrink-0 inline-block w-2 h-2 rounded-full ${
+        d.severity?.toLowerCase() === 'severe'   ? 'bg-red-500' :
+        d.severity?.toLowerCase() === 'moderate' ? 'bg-amber-400' :
+        'bg-slate-400'
+      }`} />
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${severityStyle(d.severity)}`}>
+            {d.severity}
+          </span>
+          <span className="text-xs text-slate-500 capitalize">{(d.type || '').replace(/_/g, ' ')}</span>
+        </div>
+        {d.description && (
+          <p className="text-xs text-slate-600 mt-0.5">{d.description}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PanelGroup({ panelCode, damages, dividerClass }: { panelCode: string; damages: Damage[]; dividerClass: string }) {
+  return (
+    <div className="py-1">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">
+        {panelLabel(panelCode)}
+      </p>
+      <div className={`divide-y ${dividerClass}`}>
+        {damages.map(d => <DamageCard key={d.id} d={d} />)}
+      </div>
+    </div>
+  )
+}
 
 export default async function ReportPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -25,10 +126,12 @@ export default async function ReportPage({ params }: { params: { id: string } })
   const aiReport = inspection.aiReport ? JSON.parse(inspection.aiReport) : null
   const newDamages = inspection.damages.filter(d => d.isNew)
   const existingDamages = inspection.damages.filter(d => !d.isNew)
-  const totalCost = inspection.damages.reduce((s, d) => s + (d.estimatedCost || 0), 0)
   const isComparison = !!inspection.preInspectionId
   const partyLabel = inspectionPartyLabel(inspection.type)
   const periodLabels = inspectionPeriodLabels(inspection.type)
+
+  const newByPanel = groupByPanel(newDamages)
+  const existingByPanel = groupByPanel(existingDamages)
 
   return (
     <div>
@@ -44,10 +147,11 @@ export default async function ReportPage({ params }: { params: { id: string } })
       </div>
 
       <div id="report-content" className="space-y-4 sm:space-y-6">
+
         {/* Header card */}
         <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${inspectionTypeBadge(inspection.type)}`}>
                 {inspectionTypeLabel(inspection.type)}
               </span>
@@ -56,16 +160,39 @@ export default async function ReportPage({ params }: { params: { id: string } })
               </h2>
               <p className="text-slate-500 text-sm">{inspection.vehicle.licensePlate} · {inspection.vehicle.color}</p>
             </div>
-            {aiReport && (
-              <div className="text-right shrink-0">
-                <p className="text-xs text-slate-400 mb-1">Condition</p>
-                <p className={`text-xl sm:text-2xl font-bold capitalize ${conditionColor(aiReport.overallCondition)}`}>
-                  {aiReport.overallCondition}
-                </p>
+
+            {/* Grade circle */}
+            {aiReport?.letterGrade && (
+              <div className="shrink-0 flex flex-col items-center gap-1">
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center ${gradeColor(aiReport.letterGrade)}`}>
+                  <span className="text-2xl sm:text-3xl font-black text-white leading-none">
+                    {aiReport.letterGrade.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Grade</p>
               </div>
             )}
           </div>
 
+          {/* Quality metrics row */}
+          {aiReport && (aiReport.framesAnalyzed != null || aiReport.qualityScore != null) && (
+            <div className="mt-3 flex items-center gap-4 flex-wrap">
+              {aiReport.framesAnalyzed != null && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400">Frames analyzed</span>
+                  <span className="text-xs font-bold text-slate-700">{aiReport.framesAnalyzed}</span>
+                </div>
+              )}
+              {aiReport.qualityScore != null && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400">Quality score</span>
+                  <span className="text-xs font-bold text-slate-700">{aiReport.qualityScore}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Renter / period info */}
           {(inspection.renterName || inspection.rentalStart) && (
             <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {inspection.renterName && (
@@ -96,7 +223,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
           )}
         </div>
 
-        {/* Summary */}
+        {/* Summary banner */}
         {aiReport && (
           <div className={`rounded-2xl p-4 sm:p-5 border ${
             isComparison
@@ -114,7 +241,9 @@ export default async function ReportPage({ params }: { params: { id: string } })
               <div>
                 <p className="font-bold text-slate-900 text-sm">
                   {isComparison
-                    ? (newDamages.length > 0 ? `${newDamages.length} new damage(s) detected` : 'No new damage — vehicle returned in same condition')
+                    ? (newDamages.length > 0
+                        ? `${newDamages.length} new damage(s) detected`
+                        : 'No new damage — vehicle returned in same condition')
                     : `${inspectionTypeLabel(inspection.type)} inspection complete`
                   }
                 </p>
@@ -124,66 +253,32 @@ export default async function ReportPage({ params }: { params: { id: string } })
           </div>
         )}
 
-        {/* New Damages */}
+        {/* New Damages — grouped by panel */}
         {isComparison && newDamages.length > 0 && (
           <div className="bg-white rounded-2xl border border-red-200 p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-red-800 mb-4 flex items-center gap-2 text-sm sm:text-base">
+            <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               New Damage ({newDamages.length})
             </h3>
-            <div className="space-y-3">
-              {newDamages.map(d => (
-                <div key={d.id} className="p-3 sm:p-3.5 bg-red-50 rounded-xl border border-red-100">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColor(d.severity)}`}>{d.severity}</span>
-                        <span className="text-xs text-slate-500 capitalize">{d.type.replace('_', ' ')}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-900">{d.location}</p>
-                      <p className="text-xs text-slate-600 mt-0.5">{d.description}</p>
-                    </div>
-                    {d.estimatedCost && <span className="font-bold text-red-700 shrink-0 text-sm">{formatCurrency(d.estimatedCost)}</span>}
-                  </div>
-                </div>
+            <div className="divide-y divide-red-100 space-y-0">
+              {Array.from(newByPanel.entries()).map(([code, damages]) => (
+                <PanelGroup key={code} panelCode={code} damages={damages} dividerClass="divide-red-50" />
               ))}
-              <div className="flex justify-end pt-2 border-t border-red-100">
-                <span className="font-bold text-red-800 text-sm">
-                  Total: {formatCurrency(newDamages.reduce((s, d) => s + (d.estimatedCost || 0), 0))}
-                </span>
-              </div>
             </div>
           </div>
         )}
 
-        {/* Existing/all damages */}
+        {/* Existing / all damages — grouped by panel */}
         {existingDamages.length > 0 && (
           <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm sm:text-base">
+            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
               {isComparison ? 'Pre-existing Damage' : 'Damage Found'} ({existingDamages.length})
             </h3>
-            <div className="space-y-3">
-              {existingDamages.map(d => (
-                <div key={d.id} className="p-3 sm:p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColor(d.severity)}`}>{d.severity}</span>
-                        <span className="text-xs text-slate-500 capitalize">{d.type.replace('_', ' ')}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-900">{d.location}</p>
-                      <p className="text-xs text-slate-600 mt-0.5">{d.description}</p>
-                    </div>
-                    {d.estimatedCost && <span className="font-semibold text-slate-700 shrink-0 text-sm">{formatCurrency(d.estimatedCost)}</span>}
-                  </div>
-                </div>
+            <div className="divide-y divide-slate-100 space-y-0">
+              {Array.from(existingByPanel.entries()).map(([code, damages]) => (
+                <PanelGroup key={code} panelCode={code} damages={damages} dividerClass="divide-slate-50" />
               ))}
-              {totalCost > 0 && (
-                <div className="flex justify-end pt-2 border-t border-slate-100">
-                  <span className="font-bold text-slate-900 text-sm">Total: {formatCurrency(totalCost)}</span>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -221,6 +316,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

@@ -104,9 +104,16 @@ function applyConsensus(
     )
     const best = group.reduce((b: RawDamage, d: RawDamage) => d.confidence > b.confidence ? d : b)
 
-    // Consensus filter: single low-confidence detection in many-frame inspection → skip
-    const singleFrameLowConf = count === 1 && avgConfidence < 0.65 && frameCount > 3
-    if (singleFrameLowConf) continue
+    // Filter 1: "other" panel is too vague — skip entirely
+    if (best.panelCode === 'other') continue
+
+    // Filter 2: Multi-frame inspections require at least 2 sightings of the same
+    // panelCode+type before it counts as a real finding
+    const requiredSightings = frameCount >= 10 ? 2 : 1
+    if (count < requiredSightings) continue
+
+    // Filter 3: Single sighting must have high confidence
+    if (count === 1 && avgConfidence < 0.75) continue
 
     result.push({
       type: best.type,
