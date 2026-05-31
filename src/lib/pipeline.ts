@@ -232,8 +232,21 @@ export async function runInspectionPipeline(
   // Multi-frame consensus
   const damages = applyConsensus(rawDamages, framesAnalyzed)
 
-  // Quality score: ratio of frames that contributed verified damage data
-  const qualityScore = Math.min(100, 50 + framesAnalyzed * 2)
+  // Real quality score — three components:
+  // 1. Coverage: how many distinct body panels the AI saw (full walkaround ≈ 10 panels)
+  const FULL_WALKAROUND_PANELS = 10
+  const coverageScore = Math.min(100, Math.round((visiblePanels.length / FULL_WALKAROUND_PANELS) * 100))
+
+  // 2. Frame count: more frames = better temporal sampling (20+ = full marks)
+  const frameScore = Math.min(100, Math.round((framesAnalyzed / 20) * 100))
+
+  // 3. Detection confidence: average AI confidence across verified damages
+  //    If no damage found but coverage is good, that's still a quality inspection
+  const avgConfidence = damages.length > 0
+    ? Math.round((damages.reduce((s, d) => s + d.confidence, 0) / damages.length) * 100)
+    : 75
+
+  const qualityScore = Math.round(coverageScore * 0.5 + frameScore * 0.3 + avgConfidence * 0.2)
 
   // Final report
   const report = await generateInspectionReport({

@@ -34,20 +34,54 @@ const CHECKLIST = [
   { icon: Film, text: 'You have at least 200MB free storage' },
 ]
 
-/* ─── brightness helper (runs in browser) ───────────────────────────── */
+/* ─── image quality helpers (run in browser) ────────────────────────── */
 
 function getAverageBrightness(ctx: CanvasRenderingContext2D, w: number, h: number): number {
-  const sample = ctx.getImageData(0, 0, w, h)
+  const { data } = ctx.getImageData(0, 0, w, h)
   let sum = 0
-  for (let i = 0; i < sample.data.length; i += 4) {
-    sum += 0.299 * sample.data[i] + 0.587 * sample.data[i + 1] + 0.114 * sample.data[i + 2]
+  for (let i = 0; i < data.length; i += 4) {
+    sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
   }
   return sum / (w * h)
 }
 
+// Laplacian variance — measures how much edge detail exists.
+// High value = sharp image. Low value = blurry / motion-blurred.
+// Computed on a small canvas (160×90) for speed.
+function getLaplacianVariance(ctx: CanvasRenderingContext2D, w: number, h: number): number {
+  const { data } = ctx.getImageData(0, 0, w, h)
+  const gray = new Float32Array(w * h)
+  for (let i = 0; i < w * h; i++) {
+    const p = i * 4
+    gray[i] = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]
+  }
+  let sum = 0, sumSq = 0, n = 0
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const c = y * w + x
+      const l = gray[c - w] + gray[c + w] + gray[c - 1] + gray[c + 1] - 4 * gray[c]
+      sum += l; sumSq += l * l; n++
+    }
+  }
+  const mean = sum / n
+  return n > 0 ? (sumSq / n) - mean * mean : 0
+}
+
+// Normalise Laplacian variance to 0–100 sharpness score
+function sharpnessScore(variance: number): number {
+  return Math.min(100, Math.round(Math.sqrt(variance) * 5))
+}
+
+export interface FrameQuality {
+  files: File[]
+  avgSharpness: number   // 0–100
+  keptFrames: number
+  droppedFrames: number
+}
+
 /* ─── frame extraction from recorded video blob ─────────────────────── */
 
-async function extractFrames(blob: Blob, targetCount = 35): Promise<File[]> {
+async function extractFrames(blob: Blob, targetCount = 35): Promise<FrameQuality> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(blob)
     const video = document.createElement('video')
@@ -57,21 +91,37 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<File[]> {
 
     video.onloadedmetadata = async () => {
       const duration = video.duration
+
+      // Full-res canvas for JPEG encoding
       const canvas = document.createElement('canvas')
       canvas.width = 1280
       canvas.height = Math.round(1280 * (video.videoHeight / video.videoWidth)) || 720
       const ctx = canvas.getContext('2d')!
 
-      const frames: { file: File; brightness: number; time: number }[] = []
+      // Small canvas for quality measurements (fast)
+      const qCanvas = document.createElement('canvas')
+      qCanvas.width = 160; qCanvas.height = 90
+      const qCtx = qCanvas.getContext('2d')!
+
+      const frames: { file: File; brightness: number; sharpness: number; time: number }[] = []
       const step = duration / (targetCount * 2.5)
+      let droppedFrames = 0
 
       for (let t = 0.5; t < duration - 0.5; t += step) {
         video.currentTime = t
         await new Promise<void>(res => { video.onseeked = () => res() })
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-        const brightness = getAverageBrightness(ctx, canvas.width, canvas.height)
-        if (brightness < 25 || brightness > 235) continue // skip dark/overexposed
+        // Draw once to full canvas, copy to quality canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        qCtx.drawImage(canvas, 0, 0, 160, 90)
+
+        const brightness = getAverageBrightness(qCtx, 160, 90)
+        if (brightness < 25 || brightness > 235) { droppedFrames++; continue }
+
+        const lapVar = getLaplacianVariance(qCtx, 160, 90)
+        const sharp = sharpnessScore(lapVar)
+        // Skip extremely blurry frames (heavy motion blur during recording)
+        if (sharp < 12) { droppedFrames++; continue }
 
         const jpegBlob = await new Promise<Blob>(res =>
           canvas.toBlob(b => res(b!), 'image/jpeg', 0.82)
@@ -79,20 +129,45 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<File[]> {
         frames.push({
           file: new File([jpegBlob], `frame-${Math.round(t * 1000)}.jpg`, { type: 'image/jpeg' }),
           brightness,
+          sharpness: sharp,
           time: t,
         })
       }
 
       URL.revokeObjectURL(url)
 
-      // Temporal spread: keep evenly distributed frames up to targetCount
+      if (frames.length === 0) {
+        resolve({ files: [], avgSharpness: 0, keptFrames: 0, droppedFrames })
+        return
+      }
+
+      // Divide timeline into targetCount windows, pick sharpest frame in each window
       frames.sort((a, b) => a.time - b.time)
-      const step2 = Math.max(1, Math.ceil(frames.length / targetCount))
-      const selected = frames.filter((_, i) => i % step2 === 0).slice(0, targetCount)
-      resolve(selected.map(f => f.file))
+      const windowSize = duration / targetCount
+      const selected: typeof frames = []
+      for (let w = 0; w < targetCount; w++) {
+        const windowStart = w * windowSize
+        const windowEnd = windowStart + windowSize
+        const inWindow = frames.filter(f => f.time >= windowStart && f.time < windowEnd)
+        if (inWindow.length === 0) continue
+        // Pick the sharpest frame in this window
+        const best = inWindow.reduce((a, b) => b.sharpness > a.sharpness ? b : a)
+        selected.push(best)
+      }
+
+      const avgSharpness = Math.round(
+        selected.reduce((s, f) => s + f.sharpness, 0) / selected.length
+      )
+
+      resolve({
+        files: selected.map(f => f.file),
+        avgSharpness,
+        keptFrames: selected.length,
+        droppedFrames,
+      })
     }
 
-    video.onerror = () => { URL.revokeObjectURL(url); resolve([]) }
+    video.onerror = () => { URL.revokeObjectURL(url); resolve({ files: [], avgSharpness: 0, keptFrames: 0, droppedFrames: 0 }) }
   })
 }
 
@@ -133,6 +208,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const [extractedFrames, setExtractedFrames] = useState<File[]>([])
   const [framePreviews, setFramePreviews] = useState<string[]>([])
   const [extracting, setExtracting] = useState(false)
+  const [frameQuality, setFrameQuality] = useState<{ avgSharpness: number; dropped: number } | null>(null)
 
   const [inspection, setInspection] = useState<{
     vehicle: { make: string; model: string; year: number }
@@ -245,25 +321,25 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     setExtracting(true)
     toast('Extracting best frames from video…', { icon: '⚙️' })
 
-    const frames = await extractFrames(blob, 35)
-    if (frames.length === 0) {
+    const result = await extractFrames(blob, 35)
+    if (result.files.length === 0) {
       toast.error('Could not extract frames — please try photo mode instead')
       setVideoState('checklist')
       setExtracting(false)
       return
     }
 
-    // Build preview URLs
     const previews = await Promise.all(
-      frames.slice(0, 9).map(f => new Promise<string>(res => {
+      result.files.slice(0, 9).map(f => new Promise<string>(res => {
         const reader = new FileReader()
         reader.onload = e => res(e.target?.result as string)
         reader.readAsDataURL(f)
       }))
     )
 
-    setExtractedFrames(frames)
+    setExtractedFrames(result.files)
     setFramePreviews(previews)
+    setFrameQuality({ avgSharpness: result.avgSharpness, dropped: result.droppedFrames })
     setExtracting(false)
     setVideoState('review')
   }, [])
@@ -333,8 +409,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     setExtracting(true)
     toast('Extracting best frames from video…', { icon: '⚙️' })
 
-    const frames = await extractFrames(file, 35)
-    if (frames.length === 0) {
+    const result = await extractFrames(file, 35)
+    if (result.files.length === 0) {
       toast.error('Could not read video — please try photo mode instead')
       setMode('select')
       setExtracting(false)
@@ -342,15 +418,16 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     }
 
     const previews = await Promise.all(
-      frames.slice(0, 9).map(f => new Promise<string>(res => {
+      result.files.slice(0, 9).map(f => new Promise<string>(res => {
         const reader = new FileReader()
         reader.onload = ev => res(ev.target?.result as string)
         reader.readAsDataURL(f)
       }))
     )
 
-    setExtractedFrames(frames)
+    setExtractedFrames(result.files)
     setFramePreviews(previews)
+    setFrameQuality({ avgSharpness: result.avgSharpness, dropped: result.droppedFrames })
     setExtracting(false)
     setVideoState('review')
   }
@@ -606,13 +683,43 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-bold text-slate-900">Video processed</h3>
-                <p className="text-slate-500 text-sm">{extractedFrames.length} frames extracted and ready</p>
+                <p className="text-slate-500 text-sm">{extractedFrames.length} sharp frames selected</p>
               </div>
               <div className="flex items-center gap-1.5 bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full">
                 <CheckCircle className="w-3.5 h-3.5" />
                 {extractedFrames.length} frames
               </div>
             </div>
+
+            {/* Quality bar */}
+            {frameQuality && (
+              <div className="mb-4 p-3 bg-slate-50 rounded-xl">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-slate-600">Image quality</span>
+                  <span className={`text-xs font-bold ${
+                    frameQuality.avgSharpness >= 70 ? 'text-emerald-600' :
+                    frameQuality.avgSharpness >= 45 ? 'text-amber-600' : 'text-red-500'
+                  }`}>
+                    {frameQuality.avgSharpness >= 70 ? 'Good' :
+                     frameQuality.avgSharpness >= 45 ? 'Fair' : 'Poor'} · {frameQuality.avgSharpness}/100
+                  </span>
+                </div>
+                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      frameQuality.avgSharpness >= 70 ? 'bg-emerald-500' :
+                      frameQuality.avgSharpness >= 45 ? 'bg-amber-400' : 'bg-red-400'
+                    }`}
+                    style={{ width: `${frameQuality.avgSharpness}%` }}
+                  />
+                </div>
+                {frameQuality.dropped > 0 && (
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    {frameQuality.dropped} blurry or dark frame{frameQuality.dropped !== 1 ? 's' : ''} filtered out automatically
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Frame thumbnails */}
             {framePreviews.length > 0 && (
