@@ -72,11 +72,50 @@ function sharpnessScore(variance: number): number {
   return Math.min(100, Math.round(Math.sqrt(variance) * 5))
 }
 
+// Difference hash (dHash) — brightness-invariant perceptual fingerprint.
+// Resize to 17×16, compare each pixel to its right neighbour per row → 256 bits.
+// Works better than mean-hash for video frames where exposure fluctuates.
+function computeDHash(ctx: CanvasRenderingContext2D): Uint8Array {
+  const W = 17, H = 16
+  const { data } = ctx.getImageData(0, 0, W, H)
+  const gray = new Float32Array(W * H)
+  for (let i = 0; i < W * H; i++) {
+    const p = i * 4
+    gray[i] = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]
+  }
+  // 16 comparisons per row × 16 rows = 256 bits = 32 bytes
+  const hash = new Uint8Array(32)
+  let bit = 0
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W - 1; x++) {
+      if (gray[y * W + x] < gray[y * W + x + 1]) {
+        hash[bit >> 3] |= (1 << (7 - (bit & 7)))
+      }
+      bit++
+    }
+  }
+  return hash
+}
+
+function hammingDistance(a: Uint8Array, b: Uint8Array): number {
+  let d = 0
+  for (let i = 0; i < a.length; i++) {
+    let x = a[i] ^ b[i]
+    while (x) { d += x & 1; x >>>= 1 }
+  }
+  return d
+}
+
+// Frames with Hamming distance < DUPLICATE_THRESHOLD are near-duplicates → drop.
+// 12 / 256 bits ≈ 5% different: catches same-angle consecutive frames while
+// keeping frames that show a meaningfully different view of the car.
+const DUPLICATE_THRESHOLD = 12
+
 export interface FrameQuality {
   files: File[]
   avgSharpness: number   // 0–100
   keptFrames: number
-  droppedFrames: number
+  droppedFrames: number  // blurry + dark + near-duplicate frames removed
 }
 
 /* ─── frame extraction from recorded video blob ─────────────────────── */
@@ -98,12 +137,18 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<FrameQuality
       canvas.height = Math.round(1280 * (video.videoHeight / video.videoWidth)) || 720
       const ctx = canvas.getContext('2d')!
 
-      // Small canvas for quality measurements (fast)
+      // Small canvas for quality measurements (160×90, fast)
       const qCanvas = document.createElement('canvas')
       qCanvas.width = 160; qCanvas.height = 90
       const qCtx = qCanvas.getContext('2d')!
 
+      // Tiny canvas for dHash (17×16, even faster)
+      const hCanvas = document.createElement('canvas')
+      hCanvas.width = 17; hCanvas.height = 16
+      const hCtx = hCanvas.getContext('2d')!
+
       const frames: { file: File; brightness: number; sharpness: number; time: number }[] = []
+      const keptHashes: Uint8Array[] = []
       const step = duration / (targetCount * 2.5)
       let droppedFrames = 0
 
@@ -111,17 +156,23 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<FrameQuality
         video.currentTime = t
         await new Promise<void>(res => { video.onseeked = () => res() })
 
-        // Draw once to full canvas, copy to quality canvas
+        // Draw once to full canvas, downsample to quality + hash canvases
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
         qCtx.drawImage(canvas, 0, 0, 160, 90)
+        hCtx.drawImage(canvas, 0, 0, 17, 16)
 
         const brightness = getAverageBrightness(qCtx, 160, 90)
         if (brightness < 25 || brightness > 235) { droppedFrames++; continue }
 
         const lapVar = getLaplacianVariance(qCtx, 160, 90)
         const sharp = sharpnessScore(lapVar)
-        // Skip extremely blurry frames (heavy motion blur during recording)
         if (sharp < 12) { droppedFrames++; continue }
+
+        // Near-duplicate detection: skip if too visually similar to any kept frame
+        const hash = computeDHash(hCtx)
+        const isDuplicate = keptHashes.some(h => hammingDistance(h, hash) < DUPLICATE_THRESHOLD)
+        if (isDuplicate) { droppedFrames++; continue }
+        keptHashes.push(hash)
 
         const jpegBlob = await new Promise<Blob>(res =>
           canvas.toBlob(b => res(b!), 'image/jpeg', 0.82)
@@ -715,7 +766,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
                 </div>
                 {frameQuality.dropped > 0 && (
                   <p className="text-xs text-slate-400 mt-1.5">
-                    {frameQuality.dropped} blurry or dark frame{frameQuality.dropped !== 1 ? 's' : ''} filtered out automatically
+                    {frameQuality.dropped} blurry, dark, or duplicate frame{frameQuality.dropped !== 1 ? 's' : ''} filtered out automatically
                   </p>
                 )}
               </div>
