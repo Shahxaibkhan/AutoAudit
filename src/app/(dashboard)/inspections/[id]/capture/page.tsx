@@ -125,6 +125,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisStep, setAnalysisStep] = useState('')
 
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [brightness, setBrightness] = useState(150)
@@ -181,18 +182,25 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     return () => clearInterval(interval)
   }, [recording])
 
+  /* ── Connect stream to video element after React renders it ─────── */
+  useEffect(() => {
+    if (!cameraStream || !videoRef.current) return
+    videoRef.current.srcObject = cameraStream
+    videoRef.current.play().catch(() => {})
+  }, [cameraStream, videoState])
+
   /* ── Camera start ────────────────────────────────────────────────── */
   async function startCamera() {
     try {
+      // Use simpler constraints — strict ideal resolution can fail on some phones
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: { ideal: 'environment' } },
         audio: false,
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
+      // Set both together so React batches into one render,
+      // then the useEffect above connects the stream after the video element exists
+      setCameraStream(stream)
       setVideoState('recording')
     } catch {
       toast.error('Camera access denied — switch to photo mode')
@@ -224,6 +232,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
 
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
+    setCameraStream(null)
 
     const blob = new Blob(chunksRef.current, { type: 'video/webm' })
     if (blob.size < 50_000) {
@@ -493,7 +502,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             <strong className="text-slate-800">How to record:</strong> Stand at the front, tap Record, then walk slowly clockwise around the entire car. Return to the front. Aim for 45–60 seconds.
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()) }}
+            <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraStream(null) }}
               className="py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
               Go back
             </button>
@@ -553,7 +562,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
           <div className="flex gap-3">
             {!recording ? (
               <>
-                <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()) }}
+                <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraStream(null) }}
                   className="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
