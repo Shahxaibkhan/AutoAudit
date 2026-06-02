@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Camera, FileText, Car, AlertTriangle, CheckCircle } from 'lucide-react'
-import { formatDate, formatCurrency, severityColor, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
+import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
 
 export default async function InspectionDetailPage({ params }: { params: { id: string } }) {
@@ -128,44 +128,64 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
             </div>
           </div>
 
-          {/* Damage list */}
-          {inspection.damages.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-              <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Damage Report ({inspection.damages.length})
-              </h2>
-              <div className="space-y-3">
-                {inspection.damages.map(d => (
-                  <div key={d.id} className={`p-3.5 rounded-xl border ${d.isNew ? 'border-red-200 bg-red-50' : 'border-slate-100 bg-slate-50'}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColor(d.severity)}`}>
-                            {d.severity}
-                          </span>
-                          <span className="text-xs text-slate-500 capitalize">{d.type.replace('_', ' ')}</span>
-                          {d.isNew && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">NEW</span>}
-                        </div>
-                        <p className="text-sm font-semibold text-slate-800">{d.location}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>
+          {/* Damage list — grouped by panel */}
+          {inspection.damages.length > 0 && (() => {
+            const PANEL_LABELS: Record<string, string> = {
+              front_bumper: 'Front Bumper', hood: 'Hood', windshield: 'Windshield',
+              roof: 'Roof', trunk_lid: 'Trunk / Boot', rear_bumper: 'Rear Bumper',
+              rear_window: 'Rear Window', driver_door: 'Driver Door',
+              passenger_door: 'Passenger Door', rear_driver_door: 'Rear Driver Door',
+              rear_passenger_door: 'Rear Passenger Door', front_left_fender: 'Front Left Fender',
+              front_right_fender: 'Front Right Fender', rear_left_quarter: 'Rear Left Quarter',
+              rear_right_quarter: 'Rear Right Quarter', driver_mirror: 'Driver Mirror',
+              passenger_mirror: 'Passenger Mirror', driver_rocker: 'Driver Sill',
+              passenger_rocker: 'Passenger Sill', other: 'Other',
+            }
+            const grouped = new Map<string, typeof inspection.damages>()
+            for (const d of inspection.damages) {
+              const key = d.panelCode || 'other'
+              grouped.set(key, [...(grouped.get(key) ?? []), d])
+            }
+            return (
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+                <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Damage Report ({inspection.damages.length})
+                </h2>
+                <div className="divide-y divide-slate-100">
+                  {Array.from(grouped.entries()).map(([panelCode, damages]) => (
+                    <div key={panelCode} className="py-3 first:pt-0 last:pb-0">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+                        {PANEL_LABELS[panelCode] || panelCode.replace(/_/g, ' ')}
+                      </p>
+                      <div className="space-y-2">
+                        {damages.map(d => (
+                          <div key={d.id} className="flex items-start gap-2.5">
+                            <span className={`mt-1 shrink-0 w-2 h-2 rounded-full ${
+                              d.severity?.toLowerCase() === 'severe' ? 'bg-red-500' :
+                              d.severity?.toLowerCase() === 'moderate' ? 'bg-amber-400' : 'bg-slate-400'
+                            }`} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  d.severity?.toLowerCase() === 'severe' ? 'bg-red-100 text-red-700' :
+                                  d.severity?.toLowerCase() === 'moderate' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>{d.severity}</span>
+                                <span className="text-xs text-slate-500 capitalize">{d.type.replace(/_/g, ' ')}</span>
+                                {d.isNew && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">NEW</span>}
+                              </div>
+                              {d.description && <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      {d.estimatedCost && (
-                        <span className="text-sm font-bold text-slate-900 shrink-0">{formatCurrency(d.estimatedCost)}</span>
-                      )}
                     </div>
-                  </div>
-                ))}
-                {inspection.damages.some(d => d.estimatedCost) && (
-                  <div className="flex justify-end pt-2 border-t border-slate-100">
-                    <span className="text-sm font-bold text-slate-900">
-                      Total: {formatCurrency(inspection.damages.reduce((s, d) => s + (d.estimatedCost || 0), 0))}
-                    </span>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Photos column */}
