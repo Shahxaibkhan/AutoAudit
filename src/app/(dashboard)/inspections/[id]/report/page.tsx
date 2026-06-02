@@ -167,15 +167,32 @@ export default async function ReportPage({ params }: { params: { id: string } })
               <p className="text-slate-500 text-sm">{inspection.vehicle.licensePlate} · {inspection.vehicle.color}</p>
             </div>
 
-            {/* Grade circle */}
+            {/* Grade circle + key */}
             {aiReport?.letterGrade && (
-              <div className="shrink-0 flex flex-col items-center gap-1">
+              <div className="shrink-0 flex flex-col items-center gap-2">
                 <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center ${gradeColor(aiReport.letterGrade)}`}>
                   <span className="text-2xl sm:text-3xl font-black text-white leading-none">
                     {aiReport.letterGrade.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">Grade</p>
+                <p className="text-xs text-slate-400">Condition grade</p>
+                {/* Grade key */}
+                <div className="flex flex-col gap-0.5 text-right">
+                  {[
+                    { g: 'A', label: 'Excellent', color: 'text-emerald-600' },
+                    { g: 'B', label: 'Good',      color: 'text-teal-600'    },
+                    { g: 'C', label: 'Fair',       color: 'text-amber-600'   },
+                    { g: 'D', label: 'Poor',       color: 'text-orange-600'  },
+                    { g: 'F', label: 'Very poor',  color: 'text-red-600'     },
+                  ].map(({ g, label, color }) => (
+                    <div key={g} className={`flex items-center gap-1 text-xs ${
+                      aiReport.letterGrade.toUpperCase() === g ? 'font-bold ' + color : 'text-slate-300'
+                    }`}>
+                      <span className="w-3 font-bold">{g}</span>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
