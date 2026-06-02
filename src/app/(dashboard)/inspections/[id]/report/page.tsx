@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
 import DownloadReportButton from '@/components/DownloadReportButton'
+import CarDiagram from '@/components/CarDiagram'
 
 const PANEL_LABELS: Record<string, string> = {
   front_bumper: 'Front Bumper',
@@ -250,6 +251,19 @@ export default async function ReportPage({ params }: { params: { id: string } })
                 <p className="text-sm text-slate-600 mt-1">{aiReport.summary}</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Exterior condition diagram */}
+        {inspection.damages.length > 0 && (
+          <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-4 text-sm sm:text-base">Exterior Condition</h3>
+            <CarDiagram damages={inspection.damages.map(d => ({
+              panelCode: d.panelCode,
+              severity: d.severity,
+              type: d.type,
+              description: d.description,
+            }))} />
           </div>
         )}
 
