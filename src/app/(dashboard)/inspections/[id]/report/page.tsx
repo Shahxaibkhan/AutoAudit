@@ -60,6 +60,7 @@ type Damage = {
   type: string
   description: string | null
   location: string | null
+  imageUrl: string | null
   isNew: boolean
 }
 
@@ -81,7 +82,7 @@ function DamageCard({ d }: { d: Damage }) {
         d.severity?.toLowerCase() === 'moderate' ? 'bg-amber-400' :
         'bg-slate-400'
       }`} />
-      <div className="min-w-0">
+      <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${severityStyle(d.severity)}`}>
             {d.severity}
@@ -92,6 +93,11 @@ function DamageCard({ d }: { d: Damage }) {
           <p className="text-xs text-slate-600 mt-0.5">{d.description}</p>
         )}
       </div>
+      {d.imageUrl && (
+        <div className="shrink-0 w-20 h-14 rounded-lg overflow-hidden bg-slate-100 relative">
+          <Image src={d.imageUrl} alt={d.type} fill className="object-cover" sizes="80px" />
+        </div>
+      )}
     </div>
   )
 }
@@ -249,6 +255,25 @@ export default async function ReportPage({ params }: { params: { id: string } })
                 </p>
                 <p className="text-sm text-slate-600 mt-1">{aiReport.summary}</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Stale data warning — shown when damage count is suspiciously high */}
+        {inspection.damages.length > 10 && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                {inspection.damages.length} damages found — this may include duplicates
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Improved AI filters are now available. Re-run the analysis to get a cleaner report with fewer false detections.
+              </p>
+              <a href={`/inspections/${params.id}/capture`}
+                className="inline-block mt-2 text-xs font-semibold text-amber-800 underline underline-offset-2">
+                Re-analyze this inspection →
+              </a>
             </div>
           </div>
         )}
