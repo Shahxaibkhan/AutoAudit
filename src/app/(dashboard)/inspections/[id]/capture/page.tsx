@@ -18,15 +18,84 @@ type VideoState = 'checklist' | 'recording' | 'extracting' | 'review'
 interface UploadedImage { id: string; url: string; angle: string }
 
 const PHOTO_ANGLES = [
-  { key: 'front', label: 'Front', desc: 'Straight-on front of car' },
-  { key: 'rear', label: 'Rear', desc: 'Straight-on rear of car' },
-  { key: 'left', label: 'Left Side', desc: 'Full driver side' },
-  { key: 'right', label: 'Right Side', desc: 'Full passenger side' },
-  { key: 'left_front', label: 'Left Front', desc: 'Front left corner' },
-  { key: 'right_front', label: 'Right Front', desc: 'Front right corner' },
-  { key: 'left_rear', label: 'Left Rear', desc: 'Rear left corner' },
-  { key: 'right_rear', label: 'Right Rear', desc: 'Rear right corner' },
+  { key: 'front',       label: 'Front',        desc: 'Face the front bumper',
+    guide: 'Stand 3–4m directly in front. Full bonnet, bumper and headlights should be visible.',
+    camX: 50, camY: 4,   highlight: 'front'       },
+  { key: 'rear',        label: 'Rear',          desc: 'Face the rear bumper',
+    guide: 'Stand 3–4m directly behind. Full boot lid, bumper and tail-lights visible.',
+    camX: 50, camY: 116, highlight: 'rear'        },
+  { key: 'left',        label: 'Driver Side',   desc: 'Full driver side',
+    guide: 'Stand 3–4m from the driver side. All doors and rocker panel visible.',
+    camX: 4,  camY: 60,  highlight: 'left'        },
+  { key: 'right',       label: 'Pass. Side',    desc: 'Full passenger side',
+    guide: 'Stand 3–4m from the passenger side. All doors and rocker panel visible.',
+    camX: 96, camY: 60,  highlight: 'right'       },
+  { key: 'left_front',  label: 'Front Left',    desc: 'Front-left corner',
+    guide: 'Stand at the front-left corner. Front bumper and driver fender both in frame.',
+    camX: 10, camY: 10,  highlight: 'front_left'  },
+  { key: 'right_front', label: 'Front Right',   desc: 'Front-right corner',
+    guide: 'Stand at the front-right corner. Front bumper and passenger fender both in frame.',
+    camX: 90, camY: 10,  highlight: 'front_right' },
+  { key: 'left_rear',   label: 'Rear Left',     desc: 'Rear-left corner',
+    guide: 'Stand at the rear-left corner. Rear bumper and driver quarter panel in frame.',
+    camX: 10, camY: 110, highlight: 'rear_left'   },
+  { key: 'right_rear',  label: 'Rear Right',    desc: 'Rear-right corner',
+    guide: 'Stand at the rear-right corner. Rear bumper and passenger quarter panel in frame.',
+    camX: 90, camY: 110, highlight: 'rear_right'  },
 ]
+
+/* ── Top-down car diagram showing camera position for each angle ─────── */
+function AngleGuideSVG({ camX, camY, highlight }: { camX: number; camY: number; highlight: string }) {
+  const PANEL: Record<string, [number, number, number, number]> = {
+    front:       [28, 18, 44, 14],
+    rear:        [28, 88, 44, 14],
+    left:        [18, 18, 12, 84],
+    right:       [70, 18, 12, 84],
+    front_left:  [18, 18, 28, 28],
+    front_right: [54, 18, 28, 28],
+    rear_left:   [18, 74, 28, 28],
+    rear_right:  [54, 74, 28, 28],
+  }
+  const p = PANEL[highlight]
+  // Arrow from camera toward car centre (50, 60)
+  const dx = 50 - camX, dy = 60 - camY
+  const len = Math.sqrt(dx * dx + dy * dy) || 1
+  const ux = dx / len, uy = dy / len
+  const ax1 = camX + ux * 10, ay1 = camY + uy * 10
+  const ax2 = 50 - ux * 28, ay2 = 60 - uy * 28
+  return (
+    <svg viewBox="0 0 100 120" className="w-full h-full">
+      <defs>
+        <marker id="ah" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0 0 L6 3 L0 6z" fill="#0f766e" />
+        </marker>
+      </defs>
+      <rect width="100" height="120" fill="#f8fafc" rx="8" />
+      {/* Car body */}
+      <rect x="28" y="18" width="44" height="84" rx="8" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+      {/* Windshields */}
+      <rect x="32" y="26" width="36" height="16" rx="3" fill="#bfdbfe" opacity="0.8" />
+      <rect x="32" y="78" width="36" height="14" rx="3" fill="#bfdbfe" opacity="0.8" />
+      {/* Door divider */}
+      <line x1="28" y1="52" x2="72" y2="52" stroke="#94a3b8" strokeWidth="0.8" />
+      <line x1="28" y1="66" x2="72" y2="66" stroke="#94a3b8" strokeWidth="0.8" />
+      {/* Wheels */}
+      {([[19,22],[73,22],[19,82],[73,82]] as [number,number][]).map(([wx,wy],i) => (
+        <rect key={i} x={wx} y={wy} width="8" height="16" rx="4" fill="#475569" />
+      ))}
+      {/* Highlighted panel */}
+      {p && <rect x={p[0]} y={p[1]} width={p[2]} height={p[3]} fill="#0f766e" fillOpacity="0.35" rx="4" />}
+      {/* Arrow */}
+      <line x1={ax1} y1={ay1} x2={ax2} y2={ay2}
+        stroke="#0f766e" strokeWidth="1.5" strokeDasharray="4 2" markerEnd="url(#ah)" />
+      {/* Camera */}
+      <circle cx={camX} cy={camY} r="7" fill="#0f766e" />
+      <rect x={camX-3.5} y={camY-2.5} width="7" height="5" rx="1" fill="white" />
+      <circle cx={camX} cy={camY+0.5} r="1.8" fill="#0f766e" />
+      <rect x={camX-1.5} y={camY-3.5} width="3" height="1.5" rx="0.5" fill="white" />
+    </svg>
+  )
+}
 
 const CHECKLIST = [
   { icon: Sun, text: 'Car is in good natural lighting' },
@@ -292,6 +361,7 @@ function isIOS(): boolean {
 export default function CapturePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const closeupInputRef = useRef<HTMLInputElement>(null)
   const iosVideoInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -318,6 +388,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const [isPortrait, setIsPortrait] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
   const [uploadFailed, setUploadFailed] = useState(false)
+  const [closeupImages, setCloseupImages] = useState<UploadedImage[]>([])
+  const [photoUploading, setPhotoUploading] = useState(false)
   const [extractedFrames, setExtractedFrames] = useState<File[]>([])
   const [framePreviews, setFramePreviews] = useState<string[]>([])
   const [extracting, setExtracting] = useState(false)
@@ -534,6 +606,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
     setUploading(true)
+    setPhotoUploading(true)
     for (const file of files) {
       try {
         // Quality check before upload
@@ -574,7 +647,35 @@ export default function CapturePage({ params }: { params: { id: string } }) {
       }
     }
     setUploading(false)
+    setPhotoUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  /* ── Close-up photo upload ───────────────────────────────────────── */
+  async function handleCloseupSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    if (closeupImages.length >= 8) return toast.error('Maximum 8 close-up shots allowed')
+    setPhotoUploading(true)
+    for (const file of files) {
+      try {
+        const quality = await checkPhotoQuality(file)
+        if (quality.tooDark) { toast.error('Photo too dark — retake in better light'); continue }
+        if (quality.tooBlurry) { toast.error('Photo too blurry — hold steady'); continue }
+        if (quality.warning) toast(quality.warning, { icon: '⚠️' })
+
+        const idx = closeupImages.length
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('inspectionId', params.id)
+        fd.append('angle', `closeup_${String(idx).padStart(2, '0')}`)
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (res.ok) setCloseupImages(prev => [...prev, data])
+      } catch { toast.error('Upload failed') }
+    }
+    setPhotoUploading(false)
+    if (closeupInputRef.current) closeupInputRef.current.value = ''
   }
 
   /* ── iOS native video handler ────────────────────────────────────── */
@@ -1018,97 +1119,168 @@ export default function CapturePage({ params }: { params: { id: string } }) {
       )}
 
       {/* ── Photo mode ────────────────────────────────────────────── */}
-      {mode === 'photo' && !analyzing && (
-        <div className="space-y-4">
-          {/* Progress */}
-          <div className="bg-white rounded-xl border border-slate-100 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-slate-700">{uploadedAngles.size} / {PHOTO_ANGLES.length} angles captured</span>
-              <span className="text-sm font-bold text-teal-600">{photoProgress}%</span>
-            </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-teal-500 rounded-full transition-all duration-500" style={{ width: `${photoProgress}%` }} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Angle selector */}
-            <div className="sm:col-span-1 bg-white rounded-xl border border-slate-100 p-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Select Angle</p>
-              <div className="space-y-1">
-                {PHOTO_ANGLES.map(angle => {
-                  const done = uploadedAngles.has(angle.key)
-                  const selected = currentAngle === angle.key
-                  return (
-                    <button key={angle.key} onClick={() => setCurrentAngle(angle.key)}
-                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-colors text-sm ${selected ? 'bg-teal-50 border border-teal-200' : 'hover:bg-slate-50'}`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-emerald-100' : 'bg-slate-100'}`}>
-                        {done ? <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> : <Camera className="w-3 h-3 text-slate-400" />}
-                      </div>
-                      <div>
-                        <div className={`font-medium text-xs ${done ? 'text-emerald-700' : selected ? 'text-teal-700' : 'text-slate-700'}`}>{angle.label}</div>
-                        <div className="text-slate-400 text-xs">{angle.desc}</div>
-                      </div>
-                    </button>
-                  )
-                })}
+      {mode === 'photo' && !analyzing && (() => {
+        const currentAngleData = PHOTO_ANGLES.find(a => a.key === currentAngle)!
+        const allMandatoryDone = PHOTO_ANGLES.every(a => uploadedAngles.has(a.key))
+        const totalPhotos = uploadedImages.length + closeupImages.length
+        return (
+          <div className="space-y-4">
+            {/* Progress bar */}
+            <div className="bg-white rounded-xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  {uploadedAngles.size} / {PHOTO_ANGLES.length} mandatory angles
+                  {closeupImages.length > 0 && <span className="text-slate-400"> + {closeupImages.length} close-ups</span>}
+                </span>
+                <span className="text-sm font-bold text-teal-600">{photoProgress}%</span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-teal-500 rounded-full transition-all duration-500" style={{ width: `${photoProgress}%` }} />
               </div>
             </div>
 
-            {/* Upload area */}
-            <div className="sm:col-span-2 space-y-3">
-              <div className="bg-white rounded-xl border border-slate-100 p-4">
-                <div
-                  className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {uploading ? <Loader2 className="w-8 h-8 text-teal-500 mx-auto animate-spin" /> : (
-                    <>
-                      <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-slate-700">
-                        Capture <span className="text-teal-600 capitalize">{currentAngle.replace(/_/g, ' ')}</span>
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">Tap to open camera or pick a photo</p>
-                  <p className="text-xs text-slate-300 mt-0.5">📱 Rotate phone to landscape for best results</p>
-                    </>
-                  )}
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
-              </div>
-
-              {/* Uploaded thumbnails */}
-              {uploadedImages.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-100 p-4">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{uploadedImages.length} Photos</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {uploadedImages.map(img => (
-                      <div key={img.id} className="relative group aspect-video bg-slate-100 rounded-lg overflow-hidden">
-                        <Image src={img.url} alt={img.angle} fill className="object-cover" sizes="150px" />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 p-1.5 rounded-b-lg">
-                          <span className="text-xs text-white font-medium capitalize">{img.angle.replace(/_/g, ' ')}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Angle selector */}
+              <div className="sm:col-span-1 bg-white rounded-xl border border-slate-100 p-4">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Angles</p>
+                <div className="space-y-1">
+                  {PHOTO_ANGLES.map((angle, idx) => {
+                    const done = uploadedAngles.has(angle.key)
+                    const selected = currentAngle === angle.key
+                    return (
+                      <button key={angle.key} onClick={() => setCurrentAngle(angle.key)}
+                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-colors ${selected ? 'bg-teal-50 border border-teal-200' : 'hover:bg-slate-50'}`}>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                          done ? 'bg-emerald-500 text-white' : selected ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {done ? '✓' : idx + 1}
                         </div>
-                        <button onClick={() => removeImage(img.id, img.angle)}
-                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                        <div className="min-w-0">
+                          <div className={`font-semibold text-xs truncate ${done ? 'text-emerald-700' : selected ? 'text-teal-700' : 'text-slate-700'}`}>
+                            {angle.label}
+                          </div>
+                          <div className="text-slate-400 text-xs truncate">{angle.desc}</div>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              )}
+              </div>
 
-              <button onClick={() => runAnalysis()} disabled={analyzing || uploadedImages.length === 0}
-                className="w-full flex items-center justify-center gap-2 bg-teal-500 text-white py-3.5 rounded-xl text-sm font-bold hover:bg-teal-400 disabled:opacity-40 transition-colors">
-                <Sparkles className="w-4 h-4" />
-                Analyze with AI ({uploadedImages.length} photo{uploadedImages.length !== 1 ? 's' : ''})
-              </button>
-              {uploadedImages.length === 0 && (
-                <p className="text-center text-xs text-slate-400">Upload at least one photo to analyze</p>
-              )}
+              {/* Right column: guide + upload */}
+              <div className="sm:col-span-2 space-y-3">
+
+                {/* Angle guide card */}
+                <div className="bg-white rounded-xl border border-slate-100 p-4">
+                  <div className="flex gap-4 items-start">
+                    {/* SVG diagram */}
+                    <div className="w-20 h-24 shrink-0">
+                      <AngleGuideSVG
+                        camX={currentAngleData.camX}
+                        camY={currentAngleData.camY}
+                        highlight={currentAngleData.highlight}
+                      />
+                    </div>
+                    {/* Guide text + capture button */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 mb-1">{currentAngleData.label}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-3">{currentAngleData.guide}</p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                          uploadedAngles.has(currentAngle)
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                            : 'bg-teal-500 text-white hover:bg-teal-400'
+                        } disabled:opacity-50`}
+                      >
+                        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                        {uploading
+                          ? `Uploading photo ${uploadedAngles.size + 1}…`
+                          : uploadedAngles.has(currentAngle) ? 'Retake this angle' : 'Capture photo'}
+                      </button>
+                      <p className="text-xs text-slate-300 mt-1.5">📱 Landscape for best results</p>
+                    </div>
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+                </div>
+
+                {/* Uploaded mandatory thumbnails */}
+                {uploadedImages.length > 0 && (
+                  <div className="bg-white rounded-xl border border-slate-100 p-4">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                      {uploadedImages.length} of {PHOTO_ANGLES.length} captured
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {uploadedImages.map(img => (
+                        <div key={img.id} className="relative group aspect-video bg-slate-100 rounded-lg overflow-hidden">
+                          <Image src={img.url} alt={img.angle} fill className="object-cover" sizes="100px" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-1">
+                            <span className="text-xs text-white font-medium capitalize leading-none">{img.angle.replace(/_/g, ' ')}</span>
+                          </div>
+                          <button
+                            onClick={() => { removeImage(img.id, img.angle); setCurrentAngle(img.angle) }}
+                            className="absolute top-1 right-1 bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                            Retake
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Optional close-up shots — shown after all 8 mandatory done */}
+                {allMandatoryDone && (
+                  <div className="bg-white rounded-xl border border-emerald-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Optional close-up shots</p>
+                        <p className="text-xs text-slate-500">Add detail shots of damage, VIN plate, tyres, interior (up to 8)</p>
+                      </div>
+                      <span className="text-xs text-slate-400">{closeupImages.length}/8</span>
+                    </div>
+                    {closeupImages.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        {closeupImages.map((img, i) => (
+                          <div key={img.id} className="relative group aspect-video bg-slate-100 rounded-lg overflow-hidden">
+                            <Image src={img.url} alt={`Close-up ${i+1}`} fill className="object-cover" sizes="100px" />
+                            <button
+                              onClick={() => setCloseupImages(prev => prev.filter(c => c.id !== img.id))}
+                              className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <X className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {closeupImages.length < 8 && (
+                      <button
+                        onClick={() => closeupInputRef.current?.click()}
+                        disabled={photoUploading}
+                        className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-slate-200 rounded-xl text-sm text-slate-500 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50">
+                        {photoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {photoUploading ? 'Uploading…' : '+ Add close-up shot'}
+                      </button>
+                    )}
+                    <input ref={closeupInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleCloseupSelect} />
+                  </div>
+                )}
+
+                {/* Analyze button */}
+                <button
+                  onClick={() => runAnalysis([...uploadedImages, ...closeupImages])}
+                  disabled={analyzing || totalPhotos === 0}
+                  className="w-full flex items-center justify-center gap-2 bg-teal-500 text-white py-3.5 rounded-xl text-sm font-bold hover:bg-teal-400 disabled:opacity-40 transition-colors">
+                  <Sparkles className="w-4 h-4" />
+                  Analyze with AI ({totalPhotos} photo{totalPhotos !== 1 ? 's' : ''})
+                  {!allMandatoryDone && <span className="text-teal-200 text-xs ml-1">({PHOTO_ANGLES.length - uploadedAngles.size} missing)</span>}
+                </button>
+                {totalPhotos === 0 && <p className="text-center text-xs text-slate-400">Upload at least one photo to analyze</p>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
