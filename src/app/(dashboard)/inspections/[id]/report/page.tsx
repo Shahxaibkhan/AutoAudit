@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
 import DownloadReportButton from '@/components/DownloadReportButton'
+import LightboxImage from '@/components/LightboxImage'
 
 const PANEL_LABELS: Record<string, string> = {
   front_bumper: 'Front Bumper',
@@ -95,7 +96,7 @@ function DamageCard({ d }: { d: Damage }) {
       </div>
       {d.imageUrl && (
         <div className="shrink-0 w-20 h-14 rounded-lg overflow-hidden bg-slate-100 relative">
-          <Image src={d.imageUrl} alt={d.type} fill className="object-cover" sizes="80px" />
+          <LightboxImage src={d.imageUrl} alt={d.type} fill className="object-cover" sizes="80px" />
         </div>
       )}
     </div>
@@ -341,23 +342,32 @@ export default async function ReportPage({ params }: { params: { id: string } })
         )}
 
         {/* Photos */}
-        {inspection.images.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-slate-900 mb-4 text-sm sm:text-base">
-              Inspection Photos ({inspection.images.length})
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-              {inspection.images.map(img => (
-                <div key={img.id}>
-                  <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden relative">
-                    <Image src={img.url} alt={img.angle} fill className="object-cover" sizes="200px" />
+        {inspection.images.length > 0 && (() => {
+          const gallery = inspection.images.map(img => ({ src: img.url, caption: img.angle }))
+          return (
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4 text-sm sm:text-base">
+                Inspection Photos ({inspection.images.length})
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+                {inspection.images.map((img, i) => (
+                  <div key={img.id}>
+                    <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden relative">
+                      <LightboxImage
+                        src={img.url} alt={img.angle} fill sizes="200px"
+                        className="object-cover"
+                        caption={img.angle}
+                        gallery={gallery}
+                        galleryIndex={i}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1 text-center capitalize">{img.angle.replace('_', ' ')}</p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1 text-center capitalize">{img.angle.replace('_', ' ')}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
       </div>
     </div>
