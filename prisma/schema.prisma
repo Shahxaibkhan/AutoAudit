@@ -40,6 +40,9 @@ model User {
   password           String?
   businessName       String?
   phone              String?
+  emailVerified      DateTime?
+  tosAcceptedAt      DateTime?
+  industry           String?
   // Subscription
   plan               String       @default("TRIAL")
   trialEndsAt        DateTime?

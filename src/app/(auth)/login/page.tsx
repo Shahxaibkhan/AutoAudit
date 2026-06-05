@@ -1,26 +1,55 @@
 'use client'
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ScanLine, Loader2, ArrowRight, CheckCircle } from 'lucide-react'
+import { ScanLine, Loader2, ArrowRight, CheckCircle, Mail, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const verified = searchParams.get('verified') === '1'
+  const tokenExpired = searchParams.get('error') === 'token_expired'
+
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null)
+  const [resendingVerification, setResendingVerification] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setUnverifiedEmail(null)
     const res = await signIn('credentials', { ...form, redirect: false })
     setLoading(false)
-    if (res?.error) {
+
+    if (res?.error === 'email_not_verified') {
+      setUnverifiedEmail(form.email)
+    } else if (res?.error === 'too_many_attempts') {
+      toast.error('Too many login attempts. Please wait 15 minutes and try again.')
+    } else if (res?.error) {
       toast.error('Invalid email or password')
     } else {
       router.push('/dashboard')
       router.refresh()
+    }
+  }
+
+  async function resendVerification() {
+    if (!unverifiedEmail) return
+    setResendingVerification(true)
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      })
+      toast.success('Verification email sent!')
+    } catch {
+      toast.error('Could not resend — try again')
+    } finally {
+      setResendingVerification(false)
     }
   }
 
@@ -76,6 +105,44 @@ export default function LoginPage() {
             <p className="text-slate-500 mt-1.5 text-sm">Sign in to your account to continue</p>
           </div>
 
+          {/* Success: email verified */}
+          {verified && (
+            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-5">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <p className="text-sm font-medium text-emerald-800">Email verified! You can now sign in.</p>
+            </div>
+          )}
+
+          {/* Error: token expired */}
+          {tokenExpired && (
+            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <p className="text-sm font-medium text-amber-800">Verification link expired. Sign in to request a new one.</p>
+            </div>
+          )}
+
+          {/* Email not verified banner */}
+          {unverifiedEmail && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+              <div className="flex items-start gap-3">
+                <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">Please verify your email</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Check your inbox for the verification link we sent to <strong>{unverifiedEmail}</strong>.
+                  </p>
+                  <button
+                    onClick={resendVerification}
+                    disabled={resendingVerification}
+                    className="text-xs text-amber-800 font-semibold underline underline-offset-2 mt-2 disabled:opacity-50"
+                  >
+                    {resendingVerification ? 'Sending…' : 'Resend verification email'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email address</label>
@@ -90,7 +157,7 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-semibold text-slate-700">Password</label>
-                <a href="#" className="text-xs text-teal-600 hover:underline">Forgot password?</a>
+                <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">Forgot password?</Link>
               </div>
               <input
                 type="password" required

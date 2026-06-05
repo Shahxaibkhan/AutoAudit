@@ -4,6 +4,27 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
+/* ── In-memory rate limiter: max 5 attempts per email per 15 minutes ── */
+const loginAttempts = new Map<string, { count: number; resetAt: number }>()
+const MAX_ATTEMPTS = 5
+const WINDOW_MS = 15 * 60 * 1000
+
+function checkRateLimit(email: string): boolean {
+  const now = Date.now()
+  const entry = loginAttempts.get(email)
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(email, { count: 1, resetAt: now + WINDOW_MS })
+    return true
+  }
+  if (entry.count >= MAX_ATTEMPTS) return false
+  entry.count++
+  return true
+}
+
+function clearRateLimit(email: string) {
+  loginAttempts.delete(email)
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
   session: { strategy: 'jwt' },
@@ -17,10 +38,28 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
+
+        const emailKey = credentials.email.toLowerCase()
+
+        // Rate limit check
+        if (!checkRateLimit(emailKey)) {
+          throw new Error('too_many_attempts')
+        }
+
         const user = await prisma.user.findUnique({ where: { email: credentials.email } })
         if (!user || !user.password) return null
+
         const valid = await bcrypt.compare(credentials.password, user.password)
         if (!valid) return null
+
+        clearRateLimit(emailKey)
+
+        // Block unverified emails (demo accounts bypass)
+        const isDemo = user.email.startsWith('demo-') && user.email.includes('@autoauditai.com')
+        if (!isDemo && !user.emailVerified) {
+          throw new Error('email_not_verified')
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -42,7 +81,6 @@ export const authOptions: NextAuthOptions = {
         token.creditsTotal = (user as any).creditsTotal
         token.trialEndsAt = (user as any).trialEndsAt
       }
-      // Refresh subscription data on update trigger
       if (trigger === 'update') {
         const fresh = await prisma.user.findUnique({ where: { id: token.id as string } })
         if (fresh) {
