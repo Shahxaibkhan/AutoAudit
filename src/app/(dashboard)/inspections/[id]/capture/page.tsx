@@ -5,7 +5,8 @@ import Link from 'next/link'
 import {
   ArrowLeft, Camera, Upload, CheckCircle, Loader2, X, Sparkles,
   Video, Sun, Focus, AlertTriangle, RotateCcw, Play, Square,
-  ChevronRight, ImageIcon, Film
+  ChevronRight, ImageIcon, Film, Smartphone, Car, ArrowUp,
+  ArrowRight, ArrowDown, Navigation
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
@@ -31,8 +32,24 @@ const CHECKLIST = [
   { icon: Sun, text: 'Car is in good natural lighting' },
   { icon: Camera, text: 'Camera lens is clean and dry' },
   { icon: Focus, text: 'You have space to walk around the entire car' },
+  { icon: Car, text: 'Stand 3–4 metres away from the car' },
+  { icon: Smartphone, text: 'Hold your phone horizontally (landscape mode)' },
   { icon: Film, text: 'You have at least 200MB free storage' },
 ]
+
+/* ── Walkaround direction guide (time-based) ─────────────────────────── */
+const WALKAROUND_STEPS = [
+  { label: 'Front',      hint: 'Face the front — start recording',     icon: ArrowUp,    color: 'text-teal-400',   timeRange: [0,  12] },
+  { label: 'Right side', hint: 'Walk slowly to the right side →',      icon: ArrowRight, color: 'text-blue-400',   timeRange: [12, 27] },
+  { label: 'Rear',       hint: 'Continue walking to the rear',         icon: ArrowDown,  color: 'text-purple-400', timeRange: [27, 42] },
+  { label: 'Left side',  hint: 'Walk slowly to the left side ←',       icon: ArrowLeft,  color: 'text-indigo-400', timeRange: [42, 57] },
+  { label: 'Complete!',  hint: 'Return to the front — great walkaround!',icon: CheckCircle,color: 'text-emerald-400',timeRange: [57, 90] },
+]
+
+function getWalkaroundStep(elapsed: number) {
+  return WALKAROUND_STEPS.find(s => elapsed >= s.timeRange[0] && elapsed < s.timeRange[1])
+    ?? WALKAROUND_STEPS[WALKAROUND_STEPS.length - 1]
+}
 
 /* ─── image quality helpers (run in browser) ────────────────────────── */
 
@@ -297,6 +314,10 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const [elapsed, setElapsed] = useState(0)
   const [brightness, setBrightness] = useState(150)
   const [qualityWarning, setQualityWarning] = useState('')
+  const [shakeWarning, setShakeWarning] = useState(false)
+  const [isPortrait, setIsPortrait] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
+  const [uploadFailed, setUploadFailed] = useState(false)
   const [extractedFrames, setExtractedFrames] = useState<File[]>([])
   const [framePreviews, setFramePreviews] = useState<string[]>([])
   const [extracting, setExtracting] = useState(false)
@@ -338,6 +359,31 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     return () => clearInterval(interval)
   }, [recording])
 
+  /* ── Shake / stability detection (DeviceMotion API) ─────────────── */
+  useEffect(() => {
+    if (!recording) return
+    let lastMag = 0
+    const handle = (e: DeviceMotionEvent) => {
+      const a = e.acceleration
+      if (!a) return
+      const mag = Math.sqrt((a.x ?? 0) ** 2 + (a.y ?? 0) ** 2 + (a.z ?? 0) ** 2)
+      const delta = Math.abs(mag - lastMag)
+      lastMag = mag
+      setShakeWarning(delta > 7) // sharp movement > 7 m/s² change = shaking
+    }
+    window.addEventListener('devicemotion', handle)
+    return () => { window.removeEventListener('devicemotion', handle); setShakeWarning(false) }
+  }, [recording])
+
+  /* ── Orientation detection during recording ──────────────────────── */
+  useEffect(() => {
+    if (!recording) return
+    const check = () => setIsPortrait(window.innerHeight > window.innerWidth)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [recording])
+
   /* ── Elapsed timer ───────────────────────────────────────────────── */
   useEffect(() => {
     if (!recording) return
@@ -362,7 +408,11 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     try {
       // Use simpler constraints — strict ideal resolution can fail on some phones
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
         audio: false,
       })
       streamRef.current = stream
@@ -380,7 +430,13 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     const stream = streamRef.current
     if (!stream) return
     chunksRef.current = []
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' })
+    // 1.5 Mbps = 60-80% smaller than default — still plenty for AI frame extraction
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''
+    const recorderOptions: { videoBitsPerSecond: number; mimeType?: string } = { videoBitsPerSecond: 1_500_000 }
+    if (mimeType) recorderOptions.mimeType = mimeType
+    const recorder = new MediaRecorder(stream, recorderOptions)
     recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
     recorder.start(500)
     recorderRef.current = recorder
@@ -440,9 +496,12 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   async function uploadFrames() {
     if (extractedFrames.length === 0) return
     setUploading(true)
+    setUploadFailed(false)
+    setUploadProgress({ current: 0, total: extractedFrames.length })
     const newImages: UploadedImage[] = []
 
     for (let i = 0; i < extractedFrames.length; i++) {
+      setUploadProgress({ current: i + 1, total: extractedFrames.length })
       try {
         const fd = new FormData()
         fd.append('file', extractedFrames[i])
@@ -451,11 +510,21 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
         const data = await res.json()
         if (res.ok) newImages.push(data)
-      } catch { /* skip failed frames */ }
+      } catch { /* skip individual failed frames, accumulate what we can */ }
     }
 
-    setUploadedImages(prev => [...prev, ...newImages])
     setUploading(false)
+    setUploadProgress(null)
+
+    if (newImages.length === 0) {
+      // Total failure — keep frames in memory so user can retry
+      setUploadFailed(true)
+      toast.error('Upload failed — check your connection and retry')
+      return
+    }
+
+    // Partial or full success — proceed
+    setUploadedImages(prev => [...prev, ...newImages])
     toast.success(`${newImages.length} frames uploaded — ready to analyze`)
     await runAnalysis(newImages)
   }
@@ -704,46 +773,72 @@ export default function CapturePage({ params }: { params: { id: string } }) {
 
       {/* ── Video: recording screen ────────────────────────────────── */}
       {mode === 'video' && videoState === 'recording' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
+          {/* Portrait mode warning — shown above camera */}
+          {recording && isPortrait && (
+            <div className="flex items-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl">
+              <Smartphone className="w-4 h-4 shrink-0" />
+              Rotate phone to landscape for better coverage
+            </div>
+          )}
+
           {/* Camera preview */}
           <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             <canvas ref={brightnessCanvasRef} className="hidden" />
 
-            {/* Quality warning overlay */}
-            {qualityWarning && (
-              <div className="absolute top-4 left-4 right-4 bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                {qualityWarning}
+            {/* Quality / shake warning */}
+            {(qualityWarning || shakeWarning) && (
+              <div className="absolute top-3 left-3 right-3 bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                {shakeWarning ? 'Moving too fast — walk slowly and steadily' : qualityWarning}
               </div>
             )}
 
             {/* Recording indicator */}
             {recording && (
-              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full">
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full">
                 <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
                 REC {elapsed}s
               </div>
             )}
 
-            {/* Progress arc (simplified as a timer bar) */}
-            {recording && (
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${elapsed < 30 ? 'bg-amber-400' : 'bg-teal-400'}`}
-                    style={{ width: `${Math.min(100, (elapsed / 60) * 100)}%` }}
-                  />
+            {/* Direction guidance overlay — shown while recording */}
+            {recording && (() => {
+              const step = getWalkaroundStep(elapsed)
+              const StepIcon = step.icon
+              return (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pt-8 pb-3">
+                  {/* Walkaround position dots */}
+                  <div className="flex items-center justify-center gap-1.5 mb-2">
+                    {WALKAROUND_STEPS.slice(0, 4).map((s, i) => {
+                      const active = elapsed >= s.timeRange[0] && elapsed < s.timeRange[1]
+                      const done = elapsed >= s.timeRange[1]
+                      return (
+                        <div key={i} className="flex items-center gap-1">
+                          <div className={`rounded-full transition-all ${
+                            active ? 'w-3 h-3 bg-white' :
+                            done ? 'w-2 h-2 bg-teal-400' :
+                            'w-2 h-2 bg-white/30'
+                          }`} />
+                          {i < 3 && <div className={`h-px w-6 ${done ? 'bg-teal-400' : 'bg-white/20'}`} />}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Current step */}
+                  <div className="flex items-center justify-center gap-2">
+                    <StepIcon className={`w-4 h-4 ${step.color}`} />
+                    <span className="text-white text-sm font-semibold">{step.hint}</span>
+                  </div>
+                  {/* Timer bar */}
+                  <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-1000 ${elapsed < 30 ? 'bg-amber-400' : 'bg-teal-400'}`}
+                      style={{ width: `${Math.min(100, (elapsed / 60) * 100)}%` }} />
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs text-white/60 mt-1">
-                  <span>0s</span>
-                  <span className={elapsed >= 30 ? 'text-teal-300 font-semibold' : ''}>
-                    {elapsed >= 30 ? `${elapsed}s ✓` : `Need ${30 - elapsed}s more`}
-                  </span>
-                  <span>60s</span>
-                </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
 
           {/* Controls */}
@@ -763,13 +858,12 @@ export default function CapturePage({ params }: { params: { id: string } }) {
               <>
                 <div className="flex-1 flex items-center gap-2 text-slate-500 text-sm">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  Walk slowly around the car…
+                  {elapsed < 30 ? `${30 - elapsed}s until you can stop` : 'Walk slowly around the car…'}
                 </div>
-                <button onClick={stopRecording}
-                  disabled={elapsed < 30}
+                <button onClick={stopRecording} disabled={elapsed < 30}
                   className="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 disabled:opacity-40 transition-colors flex items-center gap-2">
                   <Square className="w-4 h-4 fill-white" />
-                  {elapsed < 30 ? `Wait ${30 - elapsed}s` : 'Stop'}
+                  {elapsed < 30 ? `${30 - elapsed}s` : 'Stop'}
                 </button>
               </>
             )}
@@ -848,10 +942,22 @@ export default function CapturePage({ params }: { params: { id: string } }) {
               </div>
             )}
 
+            {/* Upload failed banner with retry */}
+            {uploadFailed && (
+              <div className="mb-3 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-3">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-red-700">Upload failed</p>
+                  <p className="text-xs text-red-600 mt-0.5">Your frames are preserved. Check your connection and tap Retry.</p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => {
                   setExtractedFrames([])
                   setFramePreviews([])
+                  setUploadFailed(false)
                   setElapsed(0)
                   if (iosDevice) {
                     setMode('select')
@@ -864,9 +970,17 @@ export default function CapturePage({ params }: { params: { id: string } }) {
                 <RotateCcw className="w-4 h-4" /> Retake
               </button>
               <button onClick={uploadFrames} disabled={uploading}
-                className="flex items-center justify-center gap-2 py-3 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-400 disabled:opacity-60 transition-colors">
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {uploading ? 'Uploading…' : 'Analyze with AI'}
+                className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold disabled:opacity-60 transition-colors ${
+                  uploadFailed
+                    ? 'bg-red-500 hover:bg-red-400 text-white'
+                    : 'bg-teal-500 hover:bg-teal-400 text-white'
+                }`}>
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : uploadFailed ? <RotateCcw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                {uploading && uploadProgress
+                  ? `Uploading ${uploadProgress.current} / ${uploadProgress.total}…`
+                  : uploading ? 'Uploading…'
+                  : uploadFailed ? 'Retry Upload'
+                  : 'Analyze with AI'}
               </button>
             </div>
           </div>
@@ -955,6 +1069,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
                         Capture <span className="text-teal-600 capitalize">{currentAngle.replace(/_/g, ' ')}</span>
                       </p>
                       <p className="text-xs text-slate-400 mt-1">Tap to open camera or pick a photo</p>
+                  <p className="text-xs text-slate-300 mt-0.5">📱 Rotate phone to landscape for best results</p>
                     </>
                   )}
                 </div>
