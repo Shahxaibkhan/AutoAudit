@@ -461,14 +461,14 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     return () => { window.removeEventListener('devicemotion', handle); setShakeWarning(false) }
   }, [recording])
 
-  /* ── Orientation detection during recording ──────────────────────── */
+  /* ── Orientation detection (active whenever recording screen is visible) */
   useEffect(() => {
-    if (!recording) return
+    if (mode !== 'video' || videoState !== 'recording') return
     const check = () => setIsPortrait(window.innerHeight > window.innerWidth)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
-  }, [recording])
+  }, [mode, videoState])
 
   /* ── Elapsed timer ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -798,6 +798,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   if (mode === 'video' && videoState === 'recording') {
     const step = recording ? getWalkaroundStep(elapsed) : null
     const StepIcon = step?.icon ?? ArrowUp
+    // Detect portrait on mount/resize (already tracked in isPortrait state)
+    const stillPortrait = isPortrait
     return (
       <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
         <canvas ref={brightnessCanvasRef} className="hidden" />
@@ -877,10 +879,19 @@ export default function CapturePage({ params }: { params: { id: string } }) {
 
           {/* Controls */}
           {!recording ? (
-            <button onClick={startRecording}
-              className="w-full py-4 bg-red-500 text-white rounded-2xl text-base font-bold hover:bg-red-400 transition-colors flex items-center justify-center gap-2">
-              <Play className="w-5 h-5" /> Start Recording
-            </button>
+            <>
+              {stillPortrait && (
+                <div className="flex items-center gap-2 bg-amber-500/90 text-white text-sm font-semibold px-4 py-3 rounded-xl mb-3 text-center justify-center">
+                  <Smartphone className="w-4 h-4 shrink-0" />
+                  Rotate your phone to landscape first
+                </div>
+              )}
+              <button onClick={startRecording} disabled={stillPortrait}
+                className="w-full py-4 bg-red-500 text-white rounded-2xl text-base font-bold hover:bg-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+                <Play className="w-5 h-5" />
+                {stillPortrait ? 'Rotate to landscape to start' : 'Start Recording'}
+              </button>
+            </>
           ) : (
             <div className="flex items-center gap-4">
               <div className="flex-1 flex items-center gap-2 text-white/70 text-sm">
@@ -934,7 +945,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
           )}
 
           <button
-            onClick={() => iosDevice ? iosVideoInputRef.current?.click() : (setMode('video'), startCamera())}
+            onClick={() => iosDevice ? iosVideoInputRef.current?.click() : setMode('video')}
             className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
             <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
               <Video className="w-6 h-6 text-white" />
@@ -990,9 +1001,9 @@ export default function CapturePage({ params }: { params: { id: string } }) {
               className="py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
               Go back
             </button>
-            <button onClick={() => { setVideoState('recording'); startCamera() }}
+            <button onClick={() => startCamera()}
               className="py-3 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-400 transition-colors">
-              I&apos;m Ready →
+              Open Camera →
             </button>
           </div>
         </div>
