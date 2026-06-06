@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 import {
   ScanLine, Shield, BarChart3, CheckCircle, ArrowRight, Zap, Star,
@@ -7,6 +8,7 @@ import {
 } from 'lucide-react'
 import MobileNav from '@/components/MobileNav'
 import LanguageToggle from '@/components/LanguageToggle'
+import { useI18n } from '@/lib/i18n'
 
 /* ─── tiny helpers ─────────────────────────────────────────────────────── */
 
@@ -25,6 +27,8 @@ function SectionLabel({ children, dark = false }: { children: React.ReactNode; d
 /* ─── page ─────────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
+  const { t } = useI18n()
+
   return (
     <div className="min-h-screen bg-slate-950 overflow-x-hidden">
 
@@ -87,32 +91,31 @@ export default function LandingPage() {
           {/* Trust badge */}
           <div className="inline-flex items-center gap-2.5 border border-teal-500/25 bg-teal-500/8 text-teal-300 text-xs font-semibold px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse" />
-            AI-powered vehicle inspection — trusted worldwide
+            {t('hero.badge')}
             <span className="text-teal-500/60">·</span>
             <span className="text-teal-400/70">🌍</span>
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-[80px] font-black text-white mb-6 leading-[1.03] tracking-tight">
-            The trust layer for<br />
-            every{' '}
-            <span className="gradient-text">car deal.</span>
+            {t('hero.title1')}<br />
+            {t('hero.title2').split(' ').slice(0, -1).join(' ')}{' '}
+            <span className="gradient-text">{t('hero.title2').split(' ').slice(-1)[0]}</span>
           </h1>
 
           <p className="text-base sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            AI-powered damage inspection for buyers who want truth, sellers who want higher offers,
-            and businesses who need dispute-proof documentation — results in under 3 minutes.
+            {t('hero.subtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
             <Link href="/register"
               className="inline-flex items-center justify-center gap-2 bg-teal-500 text-slate-950 px-7 py-4 rounded-2xl text-base font-bold hover:bg-teal-400 transition-all shadow-2xl shadow-teal-500/25 hover:-translate-y-0.5">
-              Start free — 3 inspections
+              {t('hero.cta')}
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/demo"
               className="inline-flex items-center justify-center gap-2 bg-white/6 border border-white/12 text-white px-7 py-4 rounded-2xl text-base font-semibold hover:bg-white/10 transition-all backdrop-blur-sm">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              Live demo
+              {t('hero.demo')}
             </Link>
           </div>
 
@@ -135,9 +138,9 @@ export default function LandingPage() {
           {[
             {
               icon: Eye,
-              label: 'Buying a car?',
-              title: "Don't buy blind",
-              desc: 'Catch hidden damage before you pay. Anonymous inspection — sellers never know you checked.',
+              label: t('tiles.buyer.label'),
+              title: t('tiles.buyer.title'),
+              desc: t('tiles.buyer.desc'),
               color: 'from-teal-500/20 to-teal-500/5',
               border: 'border-teal-500/20',
               iconColor: 'text-teal-400',
@@ -145,9 +148,9 @@ export default function LandingPage() {
             },
             {
               icon: TrendingUp,
-              label: 'Selling a car?',
-              title: 'Sell faster, earn more',
-              desc: 'An AI-verified condition report builds buyer confidence instantly. Documented cars sell for more.',
+              label: t('tiles.seller.label'),
+              title: t('tiles.seller.title'),
+              desc: t('tiles.seller.desc'),
               color: 'from-amber-500/15 to-amber-500/3',
               border: 'border-amber-500/20',
               iconColor: 'text-amber-400',
@@ -155,9 +158,9 @@ export default function LandingPage() {
             },
             {
               icon: Building2,
-              label: 'Running a business?',
-              title: 'Zero disputes',
-              desc: 'Fleet, rentals, dealers — pre/post inspection with PDF reports. Never lose a damage claim again.',
+              label: t('tiles.business.label'),
+              title: t('tiles.business.title'),
+              desc: t('tiles.business.desc'),
               color: 'from-indigo-500/15 to-indigo-500/3',
               border: 'border-indigo-500/20',
               iconColor: 'text-indigo-400',
