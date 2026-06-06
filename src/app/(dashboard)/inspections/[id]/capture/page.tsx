@@ -256,7 +256,21 @@ async function extractFrames(blob: Blob, targetCount = 35): Promise<FrameQuality
     video.preload = 'auto'
 
     video.onloadedmetadata = async () => {
-      const duration = video.duration
+      // Android MediaRecorder blobs have Infinity duration — fix by seeking to end
+      let duration = video.duration
+      if (!isFinite(duration)) {
+        await new Promise<void>(res => {
+          video.currentTime = 1e101
+          const handler = () => { video.removeEventListener('timeupdate', handler); res() }
+          video.addEventListener('timeupdate', handler)
+        })
+        duration = video.duration
+        // Reset to start
+        video.currentTime = 0
+        await new Promise<void>(res => { video.onseeked = () => res() })
+      }
+      // Final fallback if still not finite
+      if (!isFinite(duration) || duration <= 0) duration = 90
 
       // Full-res canvas for JPEG encoding
       const canvas = document.createElement('canvas')
@@ -633,6 +647,12 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         fd.append('inspectionId', params.id)
         fd.append('angle', currentAngle)
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        if (res.status === 401) {
+          toast.error('Session expired — please log in again', { duration: 5000 })
+          setUploading(false)
+          setPhotoUploading(false)
+          return
+        }
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
         setUploadedImages(prev => {
