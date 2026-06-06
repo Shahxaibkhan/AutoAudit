@@ -773,8 +773,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         }
         return
       }
-      toast.success('AI analysis complete!')
-      router.push(`/inspections/${params.id}/report`)
+      toast.success('AI analysis complete! Review the findings.')
+      router.push(`/inspections/${params.id}/review`)
     } catch (err) {
       clearInterval(stepTimer)
       toast.error(err instanceof Error ? err.message : 'Analysis failed')

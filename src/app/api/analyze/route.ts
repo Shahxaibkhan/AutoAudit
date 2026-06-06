@@ -98,7 +98,8 @@ export async function POST(req: Request) {
       (prisma.inspection.update as any)({
         where: { id: inspectionId },
         data: {
-          status: 'COMPLETED',
+          // Move to owner review instead of directly completed
+          status: 'PENDING_OWNER_REVIEW',
           aiReport: JSON.stringify(aiReport),
           qualityScore: result.qualityScore,
           framesAnalyzed: result.framesAnalyzed,

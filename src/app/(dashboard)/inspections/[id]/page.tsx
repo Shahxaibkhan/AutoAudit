@@ -22,6 +22,10 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
   if (!inspection) notFound()
 
   const isCompleted = inspection.status === 'COMPLETED'
+  const isPendingReview = inspection.status === 'PENDING_OWNER_REVIEW'
+  const isPendingCustomer = inspection.status === 'PENDING_CUSTOMER_REVIEW'
+  const isLocked = inspection.status === 'LOCKED' || inspection.status === 'DISPUTED'
+  const hasReport = isCompleted || isPendingReview || isPendingCustomer || isLocked
   const partyLabel = inspectionPartyLabel(inspection.type)
   const periodLabels = inspectionPeriodLabels(inspection.type)
 
@@ -43,20 +47,23 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {!isCompleted && (
-            <Link
-              href={`/inspections/${params.id}/capture`}
-              className="flex items-center gap-1.5 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20"
-            >
+          {!hasReport && (
+            <Link href={`/inspections/${params.id}/capture`}
+              className="flex items-center gap-1.5 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20">
               <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden xs:inline">{inspection.images.length > 0 ? 'Continue' : 'Start'}</span> Capture
             </Link>
           )}
-          {isCompleted && (
-            <Link
-              href={`/inspections/${params.id}/report`}
-              className="flex items-center gap-1.5 sm:gap-2 bg-emerald-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20"
-            >
+          {isPendingReview && (
+            <Link href={`/inspections/${params.id}/review`}
+              className="flex items-center gap-1.5 sm:gap-2 bg-amber-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Review Findings
+            </Link>
+          )}
+          {(isPendingCustomer || isLocked || isCompleted) && (
+            <Link href={`/inspections/${params.id}/report`}
+              className="flex items-center gap-1.5 sm:gap-2 bg-emerald-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20">
               <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Report
             </Link>
@@ -75,11 +82,17 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
           : <Camera className="w-5 h-5 text-teal-600 shrink-0" />}
         <div>
           <p className={`text-sm font-semibold ${isCompleted ? 'text-emerald-800' : inspection.status === 'IN_PROGRESS' ? 'text-teal-800' : 'text-slate-700'}`}>
-            {isCompleted ? 'Inspection Complete' : `Status: ${inspection.status.replace('_', ' ')}`}
+            {isLocked ? (inspection.status === 'DISPUTED' ? 'Inspection Disputed' : 'Inspection Locked ✓')
+              : isPendingCustomer ? 'Awaiting Customer Review'
+              : isPendingReview ? 'Ready for Owner Review'
+              : isCompleted ? 'Inspection Complete'
+              : `Status: ${inspection.status.replace(/_/g, ' ')}`}
           </p>
-          <p className={`text-xs mt-0.5 ${isCompleted ? 'text-emerald-600' : 'text-teal-600'}`}>
-            {isCompleted
-              ? `${inspection.damages.length} damage(s) found · ${inspection.images.length} photos taken`
+          <p className={`text-xs mt-0.5 ${isLocked ? (inspection.status === 'DISPUTED' ? 'text-red-600' : 'text-emerald-600') : isPendingReview ? 'text-amber-600' : isCompleted ? 'text-emerald-600' : 'text-teal-600'}`}>
+            {isLocked ? `SHA-256 verified · ${inspection.damages.length} finding(s)`
+              : isPendingCustomer ? 'Share link sent to customer'
+              : isPendingReview ? `${inspection.damages.length} AI finding(s) — tap "Review Findings" to confirm`
+              : isCompleted ? `${inspection.damages.length} damage(s) found · ${inspection.images.length} photos taken`
               : 'Upload photos and run AI analysis to complete this inspection'}
           </p>
         </div>

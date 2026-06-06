@@ -136,7 +136,8 @@ export default async function ReportPage({ params }: { params: { id: string } })
       damages: { orderBy: { isNew: 'desc' } },
     },
   })
-  if (!inspection || inspection.status !== 'COMPLETED') notFound()
+  const REPORT_STATUSES = ['COMPLETED', 'PENDING_CUSTOMER_REVIEW', 'LOCKED', 'DISPUTED']
+  if (!inspection || !REPORT_STATUSES.includes(inspection.status)) notFound()
 
   const aiReport = inspection.aiReport ? JSON.parse(inspection.aiReport) : null
   const newDamages = inspection.damages.filter(d => d.isNew)
@@ -149,6 +150,9 @@ export default async function ReportPage({ params }: { params: { id: string } })
   const existingByPanel = groupByPanel(existingDamages)
   const isB2C = isSingleInspection(inspection.type)
   const reportTitle = isB2C ? inspectionReportTitle(inspection.type) : 'Inspection Report'
+  const isLocked = inspection.status === 'LOCKED'
+  const isDisputed = inspection.status === 'DISPUTED'
+  const isPendingCustomer = inspection.status === 'PENDING_CUSTOMER_REVIEW'
 
   return (
     <div>
@@ -315,6 +319,54 @@ export default async function ReportPage({ params }: { params: { id: string } })
                 className="inline-block mt-2 text-xs font-semibold text-amber-800 underline underline-offset-2">
                 Re-analyze this inspection →
               </a>
+            </div>
+          </div>
+        )}
+
+        {/* Verification status block */}
+        {(isLocked || isDisputed || isPendingCustomer) && (
+          <div className={`rounded-2xl p-4 sm:p-5 border ${
+            isLocked ? 'bg-emerald-50 border-emerald-200' :
+            isDisputed ? 'bg-red-50 border-red-200' :
+            'bg-amber-50 border-amber-200'
+          }`}>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">{isLocked ? '🔒' : isDisputed ? '⚠️' : '⏳'}</span>
+              <div className="flex-1 min-w-0">
+                <p className={`font-bold text-sm ${isLocked ? 'text-emerald-800' : isDisputed ? 'text-red-800' : 'text-amber-800'}`}>
+                  {isLocked ? 'Fully Verified — Both Parties Signed'
+                    : isDisputed ? 'Disputed — Some findings were contested'
+                    : 'Awaiting Customer Review'}
+                </p>
+                <div className="mt-2 space-y-1 text-xs">
+                  {inspection.ownerSignedAt && (
+                    <p className="text-slate-600">
+                      Owner signed: <strong>{new Date(inspection.ownerSignedAt).toLocaleString()}</strong>
+                      {inspection.ownerPhone && ` · +92***${inspection.ownerPhone.slice(-4)}`}
+                    </p>
+                  )}
+                  {inspection.customerSignedAt && (
+                    <p className="text-slate-600">
+                      Customer signed: <strong>{new Date(inspection.customerSignedAt).toLocaleString()}</strong>
+                      {inspection.customerPhone && ` · +92***${inspection.customerPhone.slice(-4)}`}
+                    </p>
+                  )}
+                </div>
+                {inspection.verificationHash && (
+                  <div className="mt-3 bg-slate-900 rounded-xl p-3">
+                    <p className="text-xs text-slate-400 mb-1">SHA-256 Verification Hash</p>
+                    <p className="text-xs text-teal-400 font-mono break-all">{inspection.verificationHash}</p>
+                  </div>
+                )}
+                {isPendingCustomer && inspection.shareToken && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <a href={`/review/${inspection.shareToken}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-amber-700 font-semibold hover:underline">
+                      View customer review page →
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
