@@ -741,7 +741,7 @@ export default function LandingPage() {
             <a href="tel:+923434994409" className="text-slate-400 hover:text-white transition-colors font-medium">
               +92-343-4994409
             </a>
-            {' '}· Available 9am–6pm PKT
+            {' '}· Typically responds within 1 hour
           </p>
         </div>
       </section>
@@ -776,7 +776,9 @@ export default function LandingPage() {
                   { href: '#features', label: 'Features' },
                   { href: '#how-it-works', label: 'How it works' },
                   { href: '#pricing', label: 'Pricing' },
+                  { href: '#faq', label: 'FAQ' },
                   { href: '/demo', label: 'Live demo' },
+                  { href: '/sample-report', label: 'Sample report' },
                 ].map(({ href, label }) => (
                   <a key={label} href={href} className="block text-slate-500 hover:text-slate-300 text-sm transition-colors">{label}</a>
                 ))}
@@ -820,9 +822,9 @@ export default function LandingPage() {
             <p className="text-slate-600 text-xs">© 2026 AutoAuditAI. All rights reserved.</p>
             <div className="flex gap-6">
               {[
-                { href: '#', label: 'Privacy Policy' },
-                { href: '#', label: 'Terms of Service' },
-                { href: '#', label: 'Contact' },
+                { href: '/privacy', label: 'Privacy Policy' },
+                { href: '/terms', label: 'Terms of Service' },
+                { href: 'https://wa.me/923434994409', label: 'Contact' },
               ].map(({ href, label }) => (
                 <a key={label} href={href} className="text-slate-600 hover:text-slate-400 text-xs transition-colors">{label}</a>
               ))}
