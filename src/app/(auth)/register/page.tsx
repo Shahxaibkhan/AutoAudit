@@ -191,9 +191,9 @@ export default function RegisterPage() {
                 className="mt-0.5 w-4 h-4 rounded border-slate-300 accent-teal-600" />
               <label htmlFor="tos" className="text-xs text-slate-500 leading-relaxed cursor-pointer">
                 I agree to the{' '}
-                <a href="#" className="text-teal-600 hover:underline font-medium">Terms of Service</a>
+                <a href="/terms" target="_blank" className="text-teal-600 hover:underline font-medium">Terms of Service</a>
                 {' '}and{' '}
-                <a href="#" className="text-teal-600 hover:underline font-medium">Privacy Policy</a>
+                <a href="/privacy" target="_blank" className="text-teal-600 hover:underline font-medium">Privacy Policy</a>
               </label>
             </div>
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap, ShieldCheck } from 'lucide-react'
+import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap, ShieldCheck, Settings } from 'lucide-react'
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
 
 const nav = [
@@ -11,6 +11,7 @@ const nav = [
   { href: '/vehicles',     label: 'Vehicles',     icon: Car },
   { href: '/inspections',  label: 'Inspections',  icon: ClipboardList },
   { href: '/billing',      label: 'Billing',      icon: CreditCard },
+  { href: '/settings',    label: 'Settings',     icon: Settings },
 ]
 
 const adminNav = { href: '/admin', label: 'Admin', icon: ShieldCheck }

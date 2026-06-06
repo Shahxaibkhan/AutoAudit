@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import SessionProvider from '@/components/SessionProvider'
+import CookieBanner from '@/components/CookieBanner'
+import PostHogProvider from '@/components/PostHogProvider'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -17,7 +19,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="bg-slate-50 min-h-screen">
         <SessionProvider session={session}>
+          <PostHogProvider>
           {children}
+          <CookieBanner />
           <Toaster
             position="top-right"
             toastOptions={{
@@ -30,6 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               },
             }}
           />
+          </PostHogProvider>
         </SessionProvider>
       </body>
     </html>

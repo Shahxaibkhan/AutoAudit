@@ -230,10 +230,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: 'PKR 80k+', label: 'avg dispute value recovered', sub: 'per incident' },
+              { value: 'PKR 80k+', label: 'avg dispute value saved', sub: 'per rental incident' },
               { value: '3 min', label: 'video or photo inspection', sub: 'on any smartphone' },
-              { value: '6+', label: 'damage types detected', sub: 'scratches, dents, cracks & more' },
-              { value: '50+', label: 'businesses in Pakistan', sub: 'and growing' },
+              { value: '8+', label: 'damage types detected', sub: 'incl. repaint & rim damage' },
+              { value: '100%', label: 'mobile-first design', sub: 'works on any phone' },
             ].map(s => (
               <div key={s.label} className="group">
                 <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1 group-hover:text-teal-600 transition-colors">{s.value}</div>
@@ -506,7 +506,7 @@ export default function LandingPage() {
             {[
               {
                 name: 'Starter',
-                price: '$19',
+                price: 'PKR 5,000',
                 period: '/mo',
                 inspections: '50 inspections/mo',
                 desc: 'Perfect for small fleets and solo operators.',
@@ -516,7 +516,7 @@ export default function LandingPage() {
               },
               {
                 name: 'Growth',
-                price: '$49',
+                price: 'PKR 15,000',
                 period: '/mo',
                 inspections: '200 inspections/mo',
                 desc: 'For growing rental or fleet businesses.',
@@ -526,7 +526,7 @@ export default function LandingPage() {
               },
               {
                 name: 'Pro',
-                price: '$99',
+                price: 'PKR 30,000',
                 period: '/mo',
                 inspections: '600 inspections/mo',
                 desc: 'High-volume operations and multi-branch businesses.',
@@ -669,6 +669,10 @@ export default function LandingPage() {
             <Link href="/register"
               className="inline-flex items-center justify-center gap-2 bg-teal-500 text-slate-950 px-8 py-4 rounded-2xl text-base font-bold hover:bg-teal-400 transition-all shadow-2xl shadow-teal-500/25 hover:-translate-y-0.5">
               Start free — 3 inspections <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/sample-report"
+              className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-white/12 transition-all">
+              📄 View sample report
             </Link>
             <a href="https://wa.me/923434994409"
               className="inline-flex items-center justify-center gap-2 bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] px-8 py-4 rounded-2xl text-base font-semibold hover:bg-[#25D366]/15 transition-all">
