@@ -66,10 +66,20 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section className="mesh-bg pt-28 sm:pt-36 pb-20 sm:pb-32 px-4 sm:px-6 relative overflow-hidden">
-        {/* Ambient glows */}
-        <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-teal-500/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-cyan-500/8 rounded-full blur-[80px] pointer-events-none" />
+      <section className="relative pt-28 sm:pt-36 pb-20 sm:pb-32 px-4 sm:px-6 overflow-hidden bg-slate-950">
+        {/* Car photo background */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1966&q=80"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-25 pointer-events-none select-none"
+          aria-hidden="true"
+        />
+        {/* Gradient overlay: dark at top/bottom, slightly lighter at center */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/60 to-slate-950/90 pointer-events-none" />
+        {/* Ambient teal glow */}
+        <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-teal-500/12 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative">
           {/* Trust badge */}
@@ -153,20 +163,24 @@ export default function LandingPage() {
             },
           ].map(tile => (
             <div key={tile.label}
-              className={`bg-gradient-to-br ${tile.color} border ${tile.border} rounded-2xl p-6 backdrop-blur-sm`}>
-              <div className={`w-10 h-10 ${tile.iconBg} rounded-xl flex items-center justify-center mb-4`}>
-                <tile.icon className={`w-5 h-5 ${tile.iconColor}`} />
+              className={`relative bg-white/6 backdrop-blur-md border ${tile.border} rounded-2xl p-6 shadow-xl shadow-black/30 hover:bg-white/9 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden`}>
+              {/* Subtle inner gradient glow */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${tile.color} opacity-60 pointer-events-none rounded-2xl`} />
+              <div className="relative">
+                <div className={`w-10 h-10 ${tile.iconBg} rounded-xl flex items-center justify-center mb-4 backdrop-blur-sm`}>
+                  <tile.icon className={`w-5 h-5 ${tile.iconColor}`} />
+                </div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tile.label}</div>
+                <h3 className="text-white font-bold text-base mb-2">{tile.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{tile.desc}</p>
               </div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tile.label}</div>
-              <h3 className="text-white font-bold text-base mb-2">{tile.title}</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">{tile.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Dashboard preview */}
         <div className="max-w-5xl mx-auto mt-16 relative animate-float hidden sm:block">
-          <div className="bg-white/4 border border-white/8 rounded-2xl p-1 shadow-2xl glow-teal">
+          <div className="bg-white/6 backdrop-blur-sm border border-white/15 rounded-2xl p-1 shadow-2xl shadow-black/50 glow-teal ring-1 ring-inset ring-white/8">
             <div className="bg-slate-900/95 rounded-xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 bg-slate-800/70 border-b border-white/5">
                 <div className="flex gap-1.5">
@@ -290,7 +304,9 @@ export default function LandingPage() {
               },
             ].map(f => (
               <div key={f.title}
-                className={`group relative bg-white/3 border border-white/8 ${f.border} rounded-2xl p-7 transition-all hover:bg-white/5`}>
+                className={`group relative bg-white/6 backdrop-blur-md border border-white/12 ${f.border} rounded-2xl p-7 transition-all duration-200 hover:bg-white/9 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 shadow-lg shadow-black/20`}>
+                {/* Top edge highlight */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-t-2xl" />
                 <div className={`w-12 h-12 bg-gradient-to-br ${f.color} rounded-xl flex items-center justify-center mb-5 shadow-lg ${f.glow}`}>
                   <f.icon className="w-6 h-6 text-white" />
                 </div>
@@ -315,7 +331,7 @@ export default function LandingPage() {
               { icon: Shield, title: 'Money-back guarantee', desc: "If our AI report is provably wrong on a damage finding, we'll refund your credit." },
               { icon: Users, title: 'Trusted by businesses', desc: 'Rental companies, dealers, and fleet managers across Pakistan rely on AutoAuditAI daily.' },
             ].map(t => (
-              <div key={t.title} className="flex gap-4 bg-white/3 border border-white/6 rounded-xl p-5">
+              <div key={t.title} className="flex gap-4 bg-white/6 backdrop-blur-sm border border-white/10 rounded-xl p-5 shadow-md shadow-black/20">
                 <div className="w-9 h-9 bg-teal-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <t.icon className="w-4.5 h-4.5 text-teal-400" />
                 </div>
@@ -457,9 +473,11 @@ export default function LandingPage() {
       {/* ── TESTIMONIAL ─────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-3xl mx-auto">
-          <div className="relative bg-slate-950 rounded-3xl p-8 sm:p-12 overflow-hidden">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500/8 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/8 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-8 sm:p-12 overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/8">
+            <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500/12 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/12 rounded-full blur-2xl pointer-events-none" />
+            {/* Top border highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
             <div className="relative">
               {/* Stars */}
               <div className="flex gap-1 mb-6">
