@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canAnalyze } from '@/lib/subscription'
 import { runInspectionPipeline } from '@/lib/pipeline'
+import { sendInspectionCompleteEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // Vercel Pro: allow up to 5 minutes for pipeline
@@ -108,6 +109,19 @@ export async function POST(req: Request) {
       }),
       prisma.user.update({ where: { id: userId }, data: { creditsUsed: { increment: 1 } } }),
     ])
+
+    // Send completion email (non-blocking)
+    const freshUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+    if (freshUser) {
+      sendInspectionCompleteEmail({
+        email: freshUser.email,
+        name: freshUser.name,
+        vehicleName: `${inspection.vehicle.make} ${inspection.vehicle.model} ${inspection.vehicle.year}`,
+        damageCount: result.damages.length,
+        grade: result.overallGrade ?? aiReport.letterGrade ?? 'N/A',
+        inspectionId,
+      }).catch(err => console.error('Completion email failed:', err))
+    }
 
     return NextResponse.json(aiReport)
   } catch (err) {

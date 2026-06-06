@@ -26,9 +26,24 @@ export async function GET(req: Request) {
     if (!user) {
       const hashed = await bcrypt.hash(DEMO_PASSWORD, 10)
       user = await prisma.user.create({
-        data: { name: config.name, email: config.email, password: hashed, businessName: config.business },
+        data: {
+          name: config.name,
+          email: config.email,
+          password: hashed,
+          businessName: config.business,
+          emailVerified: new Date(),
+          plan: 'SALES',
+          creditsTotal: 999999,
+          creditsUsed: 0,
+        },
       })
       await SEED_FNS[industry]?.(user.id)
+    } else {
+      // Ensure existing demo accounts have unlimited credits and are verified
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date(), plan: 'SALES', creditsTotal: 999999 },
+      })
     }
 
     return NextResponse.json({ email: config.email, password: DEMO_PASSWORD })
@@ -100,7 +115,77 @@ async function seedRental(userId: string) {
   }})
   await prisma.damage.create({ data: { inspectionId: civicPost.id, type: 'scratch', severity: 'minor', location: 'Front left door', description: 'Pre-existing hairline scratch', estimatedCost: 35, isNew: false }})
 
-  await prisma.vehicle.create({ data: { make: 'Suzuki', model: 'Alto', year: 2021, licensePlate: 'ISB-3310', color: 'Red', ownerId: userId } })
+  // ── Dual-signature demo: inspection pending owner review ────────────────
+  const alto = await prisma.vehicle.create({
+    data: { make: 'Suzuki', model: 'Alto', year: 2023, licensePlate: 'ISB-3310', color: 'Red', ownerId: userId },
+  })
+  const altoPending = await prisma.inspection.create({ data: {
+    vehicleId: alto.id, userId, type: 'PRE_RENTAL', status: 'PENDING_OWNER_REVIEW',
+    renterName: 'Kamran Butt', renterPhone: '+92 300 7788991',
+    rentalStart: d3(1), rentalEnd: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    aiReport: JSON.stringify({
+      overallCondition: 'fair', overallScore: 72, letterGrade: 'C',
+      conditionLabel: 'Fair', framesAnalyzed: 28, qualityScore: 81,
+      summary: 'Vehicle shows moderate wear consistent with age. 4 AI findings detected — please review before sharing with renter.',
+      recommendation: 'Review and confirm each finding, remove any false positives, then send to renter.',
+      totalRepairCostPKR: 32000,
+    }),
+  }})
+  await prisma.damage.createMany({ data: [
+    { inspectionId: altoPending.id, type: 'scratch', severity: 'moderate', location: 'Driver door lower edge', description: 'Two parallel scratches approximately 12cm each, paint removed exposing primer. Likely from a car park incident.', panelCode: 'driver_door', confidence: 0.89, verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+    { inspectionId: altoPending.id, type: 'dent', severity: 'minor', location: 'Rear left quarter panel', description: 'Small 3cm dent near wheel arch, no paint damage. Common parking dent.', panelCode: 'rear_left_quarter', confidence: 0.76, verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+    { inspectionId: altoPending.id, type: 'rim_damage', severity: 'minor', location: 'Front left alloy rim', description: 'Light curb rash on outer lip of front left wheel. Superficial scratching on alloy face.', panelCode: 'front_left_wheel', confidence: 0.82, verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+    { inspectionId: altoPending.id, type: 'headlight_fog', severity: 'minor', location: 'Front left headlight lens', description: 'Mild UV yellowing on headlight lens. Reduces light output slightly.', panelCode: 'front_left_headlight', confidence: 0.71, verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+  ]})
+
+  // ── Dual-signature demo: fully locked inspection with hash ───────────────
+  const cultus = await prisma.vehicle.create({
+    data: { make: 'Suzuki', model: 'Cultus', year: 2022, licensePlate: 'LHR-8821', color: 'Blue', ownerId: userId },
+  })
+  const crypto = await import('crypto')
+  const demoHash = crypto.createHash('sha256').update('demo-inspection-locked-hash-autoauditai').digest('hex')
+  const cultusLocked = await prisma.inspection.create({ data: {
+    vehicleId: cultus.id, userId, type: 'PRE_RENTAL', status: 'LOCKED',
+    renterName: 'Hassan Raza', renterPhone: '+92 321 4456789',
+    rentalStart: d3(5), rentalEnd: d3(2),
+    ownerSignedAt: d3(5),
+    ownerPhone: '+923001234567',
+    customerSignedAt: new Date(d3(5).getTime() + 30 * 60 * 1000),
+    customerPhone: '+923219876543',
+    verificationHash: demoHash,
+    hashGeneratedAt: new Date(d3(5).getTime() + 30 * 60 * 1000),
+    lockedAt: new Date(d3(5).getTime() + 30 * 60 * 1000),
+    shareToken: `demo-token-${userId.slice(-8)}`,
+    shareTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    aiReport: JSON.stringify({
+      overallCondition: 'good', overallScore: 84, letterGrade: 'B',
+      conditionLabel: 'Good', framesAnalyzed: 31, qualityScore: 88,
+      summary: 'Vehicle in good condition. Both owner and renter have reviewed and signed. Report is locked and tamper-proof.',
+    }),
+  }})
+  await prisma.damage.createMany({ data: [
+    { inspectionId: cultusLocked.id, type: 'scratch', severity: 'minor', location: 'Front bumper left', description: 'Light surface scratch 6cm.', panelCode: 'front_bumper', verificationState: 'CUSTOMER_CONFIRMED', isVisibleInFinal: true },
+    { inspectionId: cultusLocked.id, type: 'paint_chip', severity: 'minor', location: 'Hood centre', description: 'Two stone chip marks.', panelCode: 'hood', verificationState: 'CUSTOMER_CONFIRMED', isVisibleInFinal: true },
+  ]})
+
+  // ── B2C demo: buyer inspection scenario ────────────────────────────────
+  const swift = await prisma.vehicle.create({
+    data: { make: 'Toyota', model: 'Yaris', year: 2022, licensePlate: 'KHI-5533', color: 'Silver', ownerId: userId },
+  })
+  const swiftBuyer = await prisma.inspection.create({ data: {
+    vehicleId: swift.id, userId, type: 'BUYER_INSPECTION', status: 'COMPLETED',
+    aiReport: JSON.stringify({
+      overallCondition: 'good', overallScore: 79, letterGrade: 'B',
+      conditionLabel: 'Good', framesAnalyzed: 24, qualityScore: 85,
+      summary: 'Vehicle is in good condition for its age. No structural damage or accident indicators found. Two minor issues documented that you can use to negotiate the price.',
+      recommendation: 'Safe to purchase. Negotiate PKR 8,000–12,000 off asking price based on findings.',
+      nextSteps: ['Share this report with the seller', 'Use estimated repair costs to negotiate', 'Get a mechanical inspection before finalising'],
+    }),
+  }})
+  await prisma.damage.createMany({ data: [
+    { inspectionId: swiftBuyer.id, type: 'scratch', severity: 'minor', location: 'Driver door', description: 'Light scuff marks on lower edge of driver door. Paint intact, surface level only.', panelCode: 'driver_door', verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+    { inspectionId: swiftBuyer.id, type: 'headlight_fog', severity: 'minor', location: 'Front left headlight', description: 'Mild UV yellowing on headlight lens. Common on cars this age.', panelCode: 'front_left_headlight', verificationState: 'AI_DETECTED', isVisibleInFinal: true },
+  ]})
 }
 
 // ─── DEALER ────────────────────────────────────────────────────────────────────

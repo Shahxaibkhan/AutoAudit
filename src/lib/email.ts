@@ -57,6 +57,43 @@ export async function sendVerificationEmail(email: string, token: string): Promi
   })
 }
 
+export async function sendInspectionCompleteEmail(params: {
+  email: string
+  name: string | null
+  vehicleName: string
+  damageCount: number
+  grade: string
+  inspectionId: string
+}): Promise<void> {
+  const link = `${BASE_URL}/inspections/${params.inspectionId}/review`
+  const body = `
+    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 16px">
+      Hi ${params.name ?? 'there'},
+    </p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px">
+      Your AI inspection for <strong>${params.vehicleName}</strong> is complete.
+      The AI found <strong>${params.damageCount} finding${params.damageCount !== 1 ? 's' : ''}</strong> —
+      please review them before sharing with your customer.
+    </p>
+    <div style="background:#f8fafc;border-radius:12px;padding:16px 20px;margin-bottom:24px;text-align:center">
+      <span style="font-size:32px;font-weight:900;color:#0f172a">${params.grade}</span>
+      <p style="color:#64748b;font-size:13px;margin:4px 0 0">Condition Grade</p>
+    </div>
+    <a href="${link}" style="display:inline-block;background:#0f766e;color:#fff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none">
+      Review Findings →
+    </a>
+    <p style="color:#94a3b8;font-size:13px;margin:24px 0 0">
+      Confirm, edit, or remove any AI findings — then sign and send to your customer.
+    </p>`
+
+  await resend.emails.send({
+    from: FROM,
+    to: params.email,
+    subject: `Inspection complete — ${params.vehicleName} (Grade ${params.grade})`,
+    html: baseTemplate(`Inspection complete: ${params.vehicleName}`, body),
+  })
+}
+
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
   const link = `${BASE_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`
   const body = `
