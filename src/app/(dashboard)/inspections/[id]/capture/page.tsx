@@ -794,6 +794,112 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const uploadedAngles = new Set(uploadedImages.map(i => i.angle))
   const photoProgress = Math.round((uploadedAngles.size / PHOTO_ANGLES.length) * 100)
 
+  /* ── Full-screen recording overlay (breaks out of page layout) ─── */
+  if (mode === 'video' && videoState === 'recording') {
+    const step = recording ? getWalkaroundStep(elapsed) : null
+    const StepIcon = step?.icon ?? ArrowUp
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
+        <canvas ref={brightnessCanvasRef} className="hidden" />
+
+        {/* Camera feed — fills entire screen */}
+        <video ref={videoRef} autoPlay playsInline muted
+          className="absolute inset-0 w-full h-full object-cover" />
+
+        {/* Top bar */}
+        <div className="relative z-10 flex items-center justify-between px-4 pt-safe pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent">
+          <button
+            onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraStream(null) }}
+            className="flex items-center gap-2 text-white/90 text-sm font-semibold bg-black/30 px-3 py-1.5 rounded-full">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          {inspection && (
+            <span className="text-white/70 text-xs font-medium">
+              {inspection.vehicle.make} {inspection.vehicle.model}
+            </span>
+          )}
+          {recording && (
+            <div className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              REC {elapsed}s
+            </div>
+          )}
+          {!recording && <div />}
+        </div>
+
+        {/* Middle warnings */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center px-4 pointer-events-none">
+          {/* Portrait warning */}
+          {recording && isPortrait && (
+            <div className="mx-auto mb-4 flex items-center gap-2 bg-amber-500/90 text-white text-sm font-semibold px-4 py-2.5 rounded-xl">
+              <Smartphone className="w-4 h-4 shrink-0" />
+              Rotate phone to landscape for better coverage
+            </div>
+          )}
+          {/* Quality / shake warning */}
+          {(qualityWarning || shakeWarning) && (
+            <div className="mx-auto flex items-center gap-2 bg-amber-500/90 text-white text-sm font-semibold px-4 py-2.5 rounded-xl">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              {shakeWarning ? 'Moving too fast — walk slowly' : qualityWarning}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom HUD */}
+        <div className="relative z-10 pb-safe pb-6 px-4 bg-gradient-to-t from-black/80 to-transparent pt-16">
+          {recording && step && (
+            <>
+              {/* Walkaround dots */}
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {WALKAROUND_STEPS.slice(0, 4).map((s, i) => {
+                  const active = elapsed >= s.timeRange[0] && elapsed < s.timeRange[1]
+                  const done = elapsed >= s.timeRange[1]
+                  return (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <div className={`rounded-full transition-all ${active ? 'w-3 h-3 bg-white' : done ? 'w-2 h-2 bg-teal-400' : 'w-2 h-2 bg-white/30'}`} />
+                      {i < 3 && <div className={`h-px w-8 ${done ? 'bg-teal-400' : 'bg-white/20'}`} />}
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Step instruction */}
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <StepIcon className={`w-4 h-4 ${step.color}`} />
+                <span className="text-white text-sm font-semibold">{step.hint}</span>
+              </div>
+              {/* Timer bar */}
+              <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mb-4">
+                <div className={`h-full rounded-full transition-all duration-1000 ${elapsed < 30 ? 'bg-amber-400' : 'bg-teal-400'}`}
+                  style={{ width: `${Math.min(100, (elapsed / 60) * 100)}%` }} />
+              </div>
+            </>
+          )}
+
+          {/* Controls */}
+          {!recording ? (
+            <button onClick={startRecording}
+              className="w-full py-4 bg-red-500 text-white rounded-2xl text-base font-bold hover:bg-red-400 transition-colors flex items-center justify-center gap-2">
+              <Play className="w-5 h-5" /> Start Recording
+            </button>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 flex items-center gap-2 text-white/70 text-sm">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                {elapsed < 30 ? `${30 - elapsed}s until you can stop` : 'Walk slowly around the car…'}
+              </div>
+              <button onClick={stopRecording} disabled={elapsed < 30}
+                className="px-6 py-3 bg-white/15 backdrop-blur text-white rounded-xl text-sm font-bold hover:bg-white/25 disabled:opacity-40 transition-colors flex items-center gap-2 border border-white/20">
+                <Square className="w-4 h-4 fill-white" />
+                {elapsed < 30 ? `${30 - elapsed}s` : 'Stop'}
+              </button>
+            </div>
+          )}
+          <p className="text-center text-white/40 text-xs mt-3">Auto-stops at 90 seconds · Minimum 30 seconds required</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
@@ -892,106 +998,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      {/* ── Video: recording screen ────────────────────────────────── */}
-      {mode === 'video' && videoState === 'recording' && (
-        <div className="space-y-3">
-          {/* Portrait mode warning — shown above camera */}
-          {recording && isPortrait && (
-            <div className="flex items-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl">
-              <Smartphone className="w-4 h-4 shrink-0" />
-              Rotate phone to landscape for better coverage
-            </div>
-          )}
-
-          {/* Camera preview */}
-          <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            <canvas ref={brightnessCanvasRef} className="hidden" />
-
-            {/* Quality / shake warning */}
-            {(qualityWarning || shakeWarning) && (
-              <div className="absolute top-3 left-3 right-3 bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                {shakeWarning ? 'Moving too fast — walk slowly and steadily' : qualityWarning}
-              </div>
-            )}
-
-            {/* Recording indicator */}
-            {recording && (
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full">
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                REC {elapsed}s
-              </div>
-            )}
-
-            {/* Direction guidance overlay — shown while recording */}
-            {recording && (() => {
-              const step = getWalkaroundStep(elapsed)
-              const StepIcon = step.icon
-              return (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pt-8 pb-3">
-                  {/* Walkaround position dots */}
-                  <div className="flex items-center justify-center gap-1.5 mb-2">
-                    {WALKAROUND_STEPS.slice(0, 4).map((s, i) => {
-                      const active = elapsed >= s.timeRange[0] && elapsed < s.timeRange[1]
-                      const done = elapsed >= s.timeRange[1]
-                      return (
-                        <div key={i} className="flex items-center gap-1">
-                          <div className={`rounded-full transition-all ${
-                            active ? 'w-3 h-3 bg-white' :
-                            done ? 'w-2 h-2 bg-teal-400' :
-                            'w-2 h-2 bg-white/30'
-                          }`} />
-                          {i < 3 && <div className={`h-px w-6 ${done ? 'bg-teal-400' : 'bg-white/20'}`} />}
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Current step */}
-                  <div className="flex items-center justify-center gap-2">
-                    <StepIcon className={`w-4 h-4 ${step.color}`} />
-                    <span className="text-white text-sm font-semibold">{step.hint}</span>
-                  </div>
-                  {/* Timer bar */}
-                  <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all duration-1000 ${elapsed < 30 ? 'bg-amber-400' : 'bg-teal-400'}`}
-                      style={{ width: `${Math.min(100, (elapsed / 60) * 100)}%` }} />
-                  </div>
-                </div>
-              )
-            })()}
-          </div>
-
-          {/* Controls */}
-          <div className="flex gap-3">
-            {!recording ? (
-              <>
-                <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraStream(null) }}
-                  className="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </button>
-                <button onClick={startRecording}
-                  className="flex-1 py-3 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-400 transition-colors flex items-center justify-center gap-2">
-                  <Play className="w-4 h-4" /> Start Recording
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="flex-1 flex items-center gap-2 text-slate-500 text-sm">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  {elapsed < 30 ? `${30 - elapsed}s until you can stop` : 'Walk slowly around the car…'}
-                </div>
-                <button onClick={stopRecording} disabled={elapsed < 30}
-                  className="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 disabled:opacity-40 transition-colors flex items-center gap-2">
-                  <Square className="w-4 h-4 fill-white" />
-                  {elapsed < 30 ? `${30 - elapsed}s` : 'Stop'}
-                </button>
-              </>
-            )}
-          </div>
-          <p className="text-center text-xs text-slate-400">Auto-stops at 90 seconds · Minimum 30 seconds required</p>
-        </div>
-      )}
+      {/* Recording screen handled by full-screen early return above */}
 
       {/* ── Video: extracting frames ───────────────────────────────── */}
       {mode === 'video' && videoState === 'extracting' && (
