@@ -350,15 +350,24 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
       {/* Damage sections */}
       {!isSigned && (
         <div className="space-y-4">
-          <SeveritySection label="Severe" color="bg-red-500"
-            damages={damages.severe} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={true} />
-          <SeveritySection label="Moderate" color="bg-amber-400"
-            damages={damages.moderate} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={false} />
-          <SeveritySection label="Minor" color="bg-emerald-400"
-            damages={damages.minor} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={false} />
-
-          {allDamages.length === 0 && (
-            <div className="text-center py-10 text-slate-400 text-sm">No damages detected by AI</div>
+          {allDamages.length === 0 ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+              <div className="text-3xl mb-3">✅</div>
+              <h3 className="font-bold text-emerald-800 text-lg mb-1">Clean condition — no damage found</h3>
+              <p className="text-emerald-700 text-sm leading-relaxed mb-4">
+                The AI inspected all frames and found no damage, scratches, dents, or defects. This vehicle appears to be in excellent condition.
+              </p>
+              <p className="text-emerald-600 text-xs">Sign below to share this clean report with your customer.</p>
+            </div>
+          ) : (
+            <>
+              <SeveritySection label="Severe" color="bg-red-500"
+                damages={damages.severe} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={true} />
+              <SeveritySection label="Moderate" color="bg-amber-400"
+                damages={damages.moderate} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={false} />
+              <SeveritySection label="Minor" color="bg-emerald-400"
+                damages={damages.minor} inspectionId={params.id} onAction={handleAction} acting={acting} defaultExpanded={false} />
+            </>
           )}
         </div>
       )}

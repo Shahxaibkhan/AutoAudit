@@ -586,13 +586,25 @@ export default function CapturePage({ params }: { params: { id: string } }) {
     setUploadProgress({ current: 0, total: extractedFrames.length })
     const newImages: UploadedImage[] = []
 
+    // Build a set of already-uploaded angles to skip on retry
+    const alreadyUploaded = new Set(uploadedImages.map(img => img.angle))
+
     for (let i = 0; i < extractedFrames.length; i++) {
       setUploadProgress({ current: i + 1, total: extractedFrames.length })
+      const angle = `frame_${String(i).padStart(3, '0')}`
+
+      // Skip frames already successfully uploaded (prevents duplicates on retry)
+      if (alreadyUploaded.has(angle)) {
+        const existing = uploadedImages.find(img => img.angle === angle)
+        if (existing) newImages.push(existing)
+        continue
+      }
+
       try {
         const fd = new FormData()
         fd.append('file', extractedFrames[i])
         fd.append('inspectionId', params.id)
-        fd.append('angle', `frame_${String(i).padStart(3, '0')}`)
+        fd.append('angle', angle)
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
         const data = await res.json()
         if (res.ok) newImages.push(data)
@@ -767,7 +779,20 @@ export default function CapturePage({ params }: { params: { id: string } }) {
       clearInterval(stepTimer)
       if (!res.ok) {
         if (data.error === 'limit_reached') {
-          toast.error('Credit limit reached — upgrade your plan to continue')
+          toast(
+            (t) => (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold">Credit limit reached</span>
+                <span className="text-xs text-slate-300">Upgrade your plan to run more inspections.</span>
+                <a href="/billing"
+                  className="mt-1 text-xs font-bold text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                  onClick={() => toast.dismiss(t.id)}>
+                  View upgrade options →
+                </a>
+              </div>
+            ),
+            { duration: 6000, icon: '🔒' }
+          )
         } else {
           throw new Error(data.error)
         }

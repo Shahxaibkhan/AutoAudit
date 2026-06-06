@@ -77,7 +77,15 @@ function NewInspectionForm() {
     if (form.vehicleId && linkedPreType) {
       fetch(`/api/inspections?vehicleId=${form.vehicleId}&type=${linkedPreType}`)
         .then(r => r.json())
-        .then((all: Inspection[]) => setPreInspections(all.filter(i => i.status === 'COMPLETED')))
+        .then((all: Inspection[]) => {
+          const completed = all.filter(i => i.status === 'COMPLETED' ||
+            i.status === 'LOCKED' || i.status === 'PENDING_CUSTOMER_REVIEW')
+          setPreInspections(completed)
+          // Auto-select the most recent one
+          if (completed.length > 0) {
+            setForm(prev => ({ ...prev, preInspectionId: completed[0].id }))
+          }
+        })
         .catch(() => setPreInspections([]))
     } else {
       setPreInspections([])

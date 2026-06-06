@@ -127,7 +127,11 @@ export async function compareInspections(
 
 const DIRECT_ANALYSIS_PROMPT = `You are an expert automotive damage inspector with advanced detection capabilities.
 
-Analyze this car image thoroughly. Flag ALL of the following:
+FIRST — validate the image:
+If this image does NOT clearly show a motor vehicle (car, truck, van, motorcycle, bus), return ONLY:
+{"not_a_vehicle": true, "damages": [], "angle": "other", "visiblePanels": []}
+
+If it IS a vehicle, analyze thoroughly and flag ALL of the following:
 
 STANDARD DAMAGE:
 - Scratches (paint surface broken or removed)

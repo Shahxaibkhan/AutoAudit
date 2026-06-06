@@ -30,6 +30,13 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   const inspection = await prisma.inspection.findFirst({ where: { id: params.id, userId } })
   if (!inspection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (['PENDING_CUSTOMER_REVIEW', 'LOCKED', 'DISPUTED'].includes(inspection.status)) {
+    return NextResponse.json(
+      { error: 'This inspection has been shared with a customer or is locked. It cannot be deleted.' },
+      { status: 403 }
+    )
+  }
+
   await prisma.inspection.delete({ where: { id: params.id } })
   return NextResponse.json({ ok: true })
 }

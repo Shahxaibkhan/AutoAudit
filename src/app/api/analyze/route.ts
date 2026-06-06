@@ -46,6 +46,13 @@ export async function POST(req: Request) {
 
     const result = await runInspectionPipeline(imageUrls, vehicleInfo, inspection.type)
 
+    // Reject if pipeline detected no vehicle in any frame
+    const nonVehicleFrames = result.damages.length === 0 && result.visiblePanels.length === 0 && result.framesAnalyzed > 0
+    if (nonVehicleFrames && result.qualityScore < 20) {
+      await prisma.inspection.update({ where: { id: inspectionId }, data: { status: 'PENDING' } })
+      return NextResponse.json({ error: 'No vehicle detected in uploaded images. Please upload clear photos of a vehicle.' }, { status: 422 })
+    }
+
     // Build legacy-compatible aiReport JSON (keeps report page working)
     const aiReport = {
       overallCondition: result.report.conditionLabel.toLowerCase(),
@@ -127,6 +134,12 @@ export async function POST(req: Request) {
   } catch (err) {
     await prisma.inspection.update({ where: { id: inspectionId }, data: { status: 'PENDING' } })
     console.error('Pipeline error:', err)
-    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+    const msg = err instanceof Error
+      ? err.message.toLowerCase().includes('timeout') ? 'Analysis timed out — please retry'
+      : err.message.toLowerCase().includes('quota') ? 'AI service busy — please retry in a moment'
+      : err.message.toLowerCase().includes('network') ? 'Network error during analysis — please check your connection and retry'
+      : 'Analysis failed — please try again'
+      : 'Analysis failed — please try again'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

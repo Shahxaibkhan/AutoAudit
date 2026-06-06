@@ -187,10 +187,17 @@ export default function CustomerReviewPage({ params }: { params: { token: string
 
   if (error) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="text-center">
+      <div className="text-center max-w-sm">
         <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
         <h1 className="text-xl font-bold text-slate-900 mb-2">Link unavailable</h1>
-        <p className="text-slate-500 text-sm">{error}</p>
+        <p className="text-slate-500 text-sm mb-4">{error}</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left text-sm text-amber-800">
+          <p className="font-semibold mb-1">What to do:</p>
+          <p>Ask the vehicle owner to send you a new inspection link. Links expire after 7 days for security.</p>
+        </div>
+        <p className="text-xs text-slate-400 mt-5">
+          Powered by <a href="/" className="text-teal-600 hover:underline">AutoAuditAI</a>
+        </p>
       </div>
     </div>
   )
