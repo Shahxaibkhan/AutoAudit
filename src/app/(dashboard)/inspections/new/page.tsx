@@ -52,6 +52,7 @@ function NewInspectionForm() {
   const [loading, setLoading] = useState(false)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [preInspections, setPreInspections] = useState<Inspection[]>([])
+  const [showB2B, setShowB2B] = useState(false)
   const [form, setForm] = useState({
     vehicleId: params.get('vehicleId') || '',
     type: 'JUST_CHECK',
@@ -63,6 +64,11 @@ function NewInspectionForm() {
   useEffect(() => {
     fetch('/api/vehicles').then(r => r.json()).then(setVehicles)
   }, [])
+
+  // Auto-expand B2B section if a B2B type is selected
+  useEffect(() => {
+    if (B2B_TYPES.includes(form.type)) setShowB2B(true)
+  }, [form.type])
 
   const linkedPreType = AFTER_TYPES[form.type]
   const isB2C = isSingleInspection(form.type)
@@ -162,17 +168,34 @@ function NewInspectionForm() {
                 </div>
               </div>
 
-              {/* Group 2: Before & After */}
+              {/* Group 2: Before & After — collapsible */}
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Before &amp; After Comparison</p>
-                <div className="bg-slate-50 rounded-2xl p-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    {B2B_TYPES.map(type => (
-                      <RadioCard key={type} type={type} selected={form.type === type}
-                        onChange={() => setForm(p => ({ ...p, type }))} />
-                    ))}
+                <button
+                  type="button"
+                  onClick={() => setShowB2B(s => !s)}
+                  className="w-full flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 hover:text-slate-600 transition-colors"
+                >
+                  <span>Before &amp; After Comparison</span>
+                  <span className={`transition-transform duration-200 ${showB2B ? 'rotate-180' : ''}`}>▼</span>
+                </button>
+                {showB2B && (
+                  <div className="bg-slate-50 rounded-2xl p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {B2B_TYPES.map(type => (
+                        <RadioCard key={type} type={type} selected={form.type === type}
+                          onChange={() => setForm(p => ({ ...p, type }))} />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+                {!showB2B && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    For rental, fleet, and dealership workflows —{' '}
+                    <button type="button" onClick={() => setShowB2B(true)} className="text-teal-600 hover:underline font-medium">
+                      show options
+                    </button>
+                  </p>
+                )}
               </div>
             </div>
 
