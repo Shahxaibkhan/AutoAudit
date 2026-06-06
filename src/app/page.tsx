@@ -333,8 +333,8 @@ export default function LandingPage() {
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { icon: Lock, title: 'Anonymous inspection', desc: 'Buyers inspect in complete privacy. Sellers never see who checked their vehicle.' },
-              { icon: Shield, title: 'Money-back guarantee', desc: "If our AI report is provably wrong on a damage finding, we'll refund your credit." },
-              { icon: Users, title: 'Trusted by businesses', desc: 'Rental companies, dealers, and fleet managers across the world rely on AutoAuditAI daily.' },
+              { icon: Shield, title: 'Backed by dual signatures', desc: 'Owner reviews AI findings, customer confirms. Both parties sign and the report is locked with a SHA-256 hash — tamper-proof forever.' },
+              { icon: Users, title: 'Trusted by businesses', desc: 'Rental companies, dealers, and fleet managers rely on AutoAuditAI to eliminate damage disputes.' },
             ].map(t => (
               <div key={t.title} className="flex gap-4 bg-white/6 backdrop-blur-sm border border-white/10 rounded-xl p-5 shadow-md shadow-black/20">
                 <div className="w-9 h-9 bg-teal-500/10 rounded-lg flex items-center justify-center shrink-0">
@@ -475,40 +475,73 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIAL ─────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-8 sm:p-12 overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/8">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500/12 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/12 rounded-full blur-2xl pointer-events-none" />
-            {/* Top border highlight */}
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
-            <div className="relative">
-              {/* Stars */}
-              <div className="flex gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              {/* Large quote mark */}
-              <div className="text-7xl font-black text-teal-500/20 leading-none mb-2 select-none">&ldquo;</div>
-              <blockquote className="text-xl sm:text-2xl font-semibold text-white leading-snug mb-8 -mt-4">
-                Before AutoAuditAI we lost thousands in a single dispute we couldn&apos;t prove.
-                Now every rental is documented before and after. We&apos;ve had zero unresolved
-                disputes in the past 6 months.
-              </blockquote>
-              <div className="flex items-center gap-3 pt-4 border-t border-white/8">
-                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  AK
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white">Ahmed Khan</div>
-                  <div className="text-xs text-slate-500">Owner, Capital Car Rentals</div>
-                  <div className="text-xs text-slate-600 italic mt-0.5">Illustrative example based on typical customer outcome</div>
-                </div>
-              </div>
-            </div>
+      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 bg-slate-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <SectionLabel dark>Customer stories</SectionLabel>
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+              Why businesses trust AutoAuditAI
+            </h2>
+            <p className="mt-4 text-slate-400 text-lg max-w-xl mx-auto">
+              From solo rental owners to multi-branch dealerships — here&apos;s what changed when they started inspecting with AI.
+            </p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                quote: "We used to argue about damage every week. Now the renter signs the inspection report before taking the car. Zero disputes in 4 months.",
+                name: "Ahmed K.",
+                role: "Car Rental Owner",
+                initials: "AK",
+                color: "from-teal-500 to-cyan-600",
+                tag: "Rental",
+              },
+              {
+                quote: "I was about to buy a used sedan that looked fine. AutoAuditAI flagged a repainted front quarter panel — classic accident cover-up. Saved me from a bad deal.",
+                name: "Sara M.",
+                role: "Used Car Buyer",
+                initials: "SM",
+                color: "from-amber-500 to-orange-600",
+                tag: "Buyer",
+              },
+              {
+                quote: "We manage 34 fleet vehicles. The shift-start/end inspection trail means drivers are accountable. Our insurance claims dropped because we have proof every time.",
+                name: "Tariq R.",
+                role: "Fleet Manager",
+                initials: "TR",
+                color: "from-indigo-500 to-violet-600",
+                tag: "Fleet",
+              },
+            ].map(t => (
+              <div key={t.name} className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/8 transition-all hover:-translate-y-0.5">
+                {/* Top border glow */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent rounded-t-2xl" />
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-4 bg-gradient-to-r ${t.color} text-white`}>
+                  {t.tag}
+                </span>
+                <blockquote className="text-slate-300 text-sm leading-relaxed mb-6">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="flex items-center gap-3 pt-4 border-t border-white/8">
+                  <div className={`w-9 h-9 bg-gradient-to-br ${t.color} rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0`}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">{t.name}</div>
+                    <div className="text-xs text-slate-500">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-slate-700 mt-6">Illustrative examples based on typical customer outcomes</p>
         </div>
       </section>
 
@@ -518,10 +551,10 @@ export default function LandingPage() {
           <div className="text-center mb-14">
             <SectionLabel dark>Pricing</SectionLabel>
             <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-              Pay per inspection,<br className="hidden sm:block" /> not per seat
+              Pay only when<br className="hidden sm:block" /> you inspect
             </h2>
             <p className="mt-5 text-slate-400 text-lg max-w-xl mx-auto">
-              Buy monthly inspection credits. Use them across any vehicle or industry.
+              Buy a bundle of inspection credits. Use them across any vehicle, any team member, any time. No per-user fees.
             </p>
           </div>
 
