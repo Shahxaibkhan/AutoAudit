@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ClipboardList, Plus, Car, ArrowRight } from 'lucide-react'
 import { formatDate, inspectionTypeLabel, inspectionTypeBadge } from '@/lib/utils'
+import DeleteButton from '@/components/DeleteButton'
+
+export const dynamic = 'force-dynamic'
 
 export default async function InspectionsPage() {
   const session = await getServerSession(authOptions)
@@ -50,11 +53,12 @@ export default async function InspectionsPage() {
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Damages</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                  <th className="px-5 py-3.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {inspections.map(insp => (
-                  <tr key={insp.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer">
+                  <tr key={insp.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-5 py-4">
                       <Link href={`/inspections/${insp.id}`} className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
@@ -86,6 +90,13 @@ export default async function InspectionsPage() {
                     <td className="px-5 py-4">
                       <span className="text-sm text-slate-400">{formatDate(insp.createdAt)}</span>
                     </td>
+                    <td className="px-5 py-4 text-right">
+                      <DeleteButton
+                        url={`/api/inspections/${insp.id}`}
+                        confirm={`Delete this ${inspectionTypeLabel(insp.type)} inspection for ${insp.vehicle.make} ${insp.vehicle.model}? This cannot be undone.`}
+                        iconOnly
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -97,10 +108,8 @@ export default async function InspectionsPage() {
             {inspections.map(insp => {
               const newDmg = insp.damages.filter(d => d.isNew).length
               return (
-                <Link key={insp.id} href={`/inspections/${insp.id}`}
-                  className="flex items-center justify-between bg-white rounded-2xl border border-slate-100 px-4 py-3.5 shadow-sm active:bg-slate-50"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
+                <div key={insp.id} className="flex items-center bg-white rounded-2xl border border-slate-100 px-4 py-3.5 shadow-sm gap-2">
+                  <Link href={`/inspections/${insp.id}`} className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
                       <Car className="w-4 h-4 text-slate-400" />
                     </div>
@@ -125,9 +134,18 @@ export default async function InspectionsPage() {
                         )}
                       </div>
                     </div>
+                  </Link>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link href={`/inspections/${insp.id}`} className="text-slate-300 p-1">
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <DeleteButton
+                      url={`/api/inspections/${insp.id}`}
+                      confirm={`Delete this inspection? This cannot be undone.`}
+                      iconOnly
+                    />
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-300 shrink-0 ml-2" />
-                </Link>
+                </div>
               )
             })}
           </div>

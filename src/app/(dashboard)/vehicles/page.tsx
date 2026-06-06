@@ -3,6 +3,9 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Car, Plus, ClipboardList } from 'lucide-react'
+import DeleteButton from '@/components/DeleteButton'
+
+export const dynamic = 'force-dynamic'
 
 export default async function VehiclesPage() {
   const session = await getServerSession(authOptions)
@@ -40,24 +43,36 @@ export default async function VehiclesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {vehicles.map(v => (
-            <Link key={v.id} href={`/vehicles/${v.id}`} className="group bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md hover:border-slate-200 transition-all shadow-sm">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
-                  <Car className="w-6 h-6 text-teal-600" />
+            <div key={v.id} className="group bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md hover:border-slate-200 transition-all shadow-sm relative">
+              {/* Delete button — top right */}
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DeleteButton
+                  url={`/api/vehicles/${v.id}`}
+                  confirm={`Delete ${v.make} ${v.model} (${v.licensePlate})?\n\nThis will also delete all ${v._count.inspections} inspection${v._count.inspections !== 1 ? 's' : ''} for this vehicle. This cannot be undone.`}
+                  iconOnly
+                  className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                />
+              </div>
+
+              <Link href={`/vehicles/${v.id}`} className="block">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+                    <Car className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-semibold">{v.year}</span>
                 </div>
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-semibold">{v.year}</span>
-              </div>
-              <h3 className="font-bold text-slate-900">{v.make} {v.model}</h3>
-              <p className="text-sm text-slate-500 mt-0.5">{v.licensePlate}</p>
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: v.color.toLowerCase() }} />
-                <span className="text-xs text-slate-500 capitalize">{v.color}</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-slate-50">
-                <ClipboardList className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-xs text-slate-500">{v._count.inspections} inspection{v._count.inspections !== 1 ? 's' : ''}</span>
-              </div>
-            </Link>
+                <h3 className="font-bold text-slate-900">{v.make} {v.model}</h3>
+                <p className="text-sm text-slate-500 mt-0.5">{v.licensePlate}</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: v.color.toLowerCase() }} />
+                  <span className="text-xs text-slate-500 capitalize">{v.color}</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-slate-50">
+                  <ClipboardList className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500">{v._count.inspections} inspection{v._count.inspections !== 1 ? 's' : ''}</span>
+                </div>
+              </Link>
+            </div>
           ))}
         </div>
       )}

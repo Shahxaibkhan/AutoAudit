@@ -20,6 +20,20 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   return NextResponse.json(inspection)
 }
 
+export const dynamic = 'force-dynamic'
+
+export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const userId = (session.user as { id: string }).id
+  const inspection = await prisma.inspection.findFirst({ where: { id: params.id, userId } })
+  if (!inspection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  await prisma.inspection.delete({ where: { id: params.id } })
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
