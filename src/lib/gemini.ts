@@ -125,33 +125,57 @@ export async function compareInspections(
 
 /* ─── Pipeline Step 1 — Gemini direct analysis (no YOLO) ─────────────── */
 
-const DIRECT_ANALYSIS_PROMPT = `You are an expert automotive damage inspector.
+const DIRECT_ANALYSIS_PROMPT = `You are an expert automotive damage inspector with advanced detection capabilities.
 
-Analyze this car image for real physical damage. Be conservative — only flag genuine damage:
-- Scratches (paint broken or removed)
-- Dents (panel deformation)
-- Cracks (in glass, plastic, or paint)
+Analyze this car image thoroughly. Flag ALL of the following:
+
+STANDARD DAMAGE:
+- Scratches (paint surface broken or removed)
+- Dents (panel deformation or rippling)
+- Cracks (in glass, bumpers, plastic trim, or paint)
 - Paint chips or peeling
-- Rust
+- Rust or corrosion
 - Broken or missing parts
 
-Do NOT flag reflections, modifications, dirt, shadows, or styling features.
+ADVANCED DETECTION — check every image for these:
+
+1. REPAINT INDICATORS (type: "repaint")
+   Flag if you see: color shade mismatch between adjacent panels, overspray on rubber door seals / window trim / plastic clips, orange-peel texture inconsistency between panels, paint runs or drips near panel edges, uneven gloss level between panels. Even a subtle mismatch is worth flagging with lower confidence.
+
+2. PANEL MISALIGNMENT / ACCIDENT INDICATOR (type: "panel_misalignment")
+   Flag if you see: uneven gap width between two panels compared to the gap on the other side of the car, a panel that sits higher or lower than its neighbor (not flush), door / hood / trunk lid that is noticeably off-centre. This strongly suggests previous accident repair or structural damage.
+
+3. RIM / WHEEL DAMAGE (type: "rim_damage")
+   Flag if you see: scrapes, gouges, chipped paint, or curb rash on the METAL or ALLOY face of a wheel rim. Severity: minor = light surface scuffs, moderate = deep gouges exposing bare metal, severe = bent or cracked rim.
+   DO NOT flag: rubber tyre sidewall scuffs or road dirt on tyres — only flag the metal rim.
+
+4. HEADLIGHT / TAILLIGHT CONDITION (type: "headlight_fog")
+   Flag if you see: yellowing, haziness, fogging, or UV oxidation on headlight or taillight lenses, cracks in the lens housing, condensation / water inside the lens. Even mild yellowing reduces visibility and resale value.
+
+Do NOT flag:
+- Light reflections or glare
+- Intentional aftermarket body mods (spoilers, body kits — but DO flag damaged ones)
+- Stickers, decals, licence plate frames
+- Dirt, dust, water drops, mud
+- Shadows or lighting artefacts
+- UNIFORM factory panel gaps (only flag UNEVEN or misaligned gaps)
+- Tyre sidewall rubber marks (only flag metal rim damage)
 
 Return ONLY this JSON (no other text):
 {
   "damages": [
     {
-      "type": "scratch" | "dent" | "crack" | "paint_chip" | "rust" | "broken" | "missing" | "other",
+      "type": "scratch" | "dent" | "crack" | "paint_chip" | "rust" | "broken" | "missing" | "repaint" | "panel_misalignment" | "rim_damage" | "headlight_fog" | "other",
       "severity": "minor" | "moderate" | "severe",
-      "panelCode": one of [front_bumper, hood, windshield, roof, trunk_lid, rear_bumper, rear_window, driver_door, passenger_door, rear_driver_door, rear_passenger_door, front_left_fender, front_right_fender, rear_left_quarter, rear_right_quarter, driver_mirror, passenger_mirror, driver_rocker, passenger_rocker, other],
-      "location": "specific position on the panel (e.g. lower left, center, edge)",
+      "panelCode": one of [front_bumper, hood, windshield, roof, trunk_lid, rear_bumper, rear_window, driver_door, passenger_door, rear_driver_door, rear_passenger_door, front_left_fender, front_right_fender, rear_left_quarter, rear_right_quarter, driver_mirror, passenger_mirror, driver_rocker, passenger_rocker, front_left_headlight, front_right_headlight, rear_left_taillight, rear_right_taillight, front_left_wheel, front_right_wheel, rear_left_wheel, rear_right_wheel, other],
+      "location": "specific position (e.g. lower edge, full panel, near rubber seal)",
       "description": "clear description in 15-40 words",
       "confidence": 0.0-1.0,
       "estimatedCostPKR": realistic repair cost in Pakistani Rupees
     }
   ],
   "angle": "front" | "rear" | "driver_side" | "passenger_side" | "corner" | "interior" | "other",
-  "visiblePanels": ["list of body panels clearly visible in this frame"]
+  "visiblePanels": ["list of all body panels and components clearly visible in this frame"]
 }`
 
 export async function analyzeFrameDirect(imageBase64: string): Promise<DirectAnalysisResult> {
@@ -204,14 +228,14 @@ export async function verifyDamage(
 
 Your job: determine if this is REAL automotive damage or a false positive.
 
-REAL damage: scratches, dents, cracks, paint chips, rust, broken parts, missing parts.
-FALSE POSITIVES to reject: reflections on paint, stickers or decals, aftermarket mods (spoilers, body kits, custom rims), dirt or dust, water drops, shadows, panel gap lines, manufacturer styling features, tire scuffs (not rim damage), tinted windows or lights.
+REAL damage: scratches, dents, cracks, paint chips, rust, broken/missing parts, repainted panels (color mismatch/overspray), panel misalignment (uneven gaps), rim/wheel damage (curb rash on metal), foggy/cracked headlights.
+FALSE POSITIVES to reject: reflections on paint, stickers/decals, intentional aftermarket mods, dirt, dust, water drops, shadows, UNIFORM factory panel gaps (only flag uneven gaps), tyre SIDEWALL rubber scuffs (only flag metal rim damage), tinted windows.
 
 Return ONLY this JSON (no other text):
 {
   "isDamage": boolean,
   "confidence": 0.0-1.0,
-  "damageType": "scratch" | "dent" | "crack" | "paint_chip" | "rust" | "broken" | "missing" | "other" | null,
+  "damageType": "scratch" | "dent" | "crack" | "paint_chip" | "rust" | "broken" | "missing" | "repaint" | "panel_misalignment" | "rim_damage" | "headlight_fog" | "other" | null,
   "severity": "minor" | "moderate" | "severe" | null,
   "description": "25-50 word specific description of what you see" | null,
   "estimatedCostPKR": realistic PKR repair cost (e.g. 3000 for minor scratch, 25000 for dent, 80000 for crack) | null,

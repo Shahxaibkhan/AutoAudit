@@ -139,7 +139,12 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
               front_right_fender: 'Front Right Fender', rear_left_quarter: 'Rear Left Quarter',
               rear_right_quarter: 'Rear Right Quarter', driver_mirror: 'Driver Mirror',
               passenger_mirror: 'Passenger Mirror', driver_rocker: 'Driver Sill',
-              passenger_rocker: 'Passenger Sill', other: 'Other',
+              passenger_rocker: 'Passenger Sill',
+              front_left_headlight: 'Front Left Headlight', front_right_headlight: 'Front Right Headlight',
+              rear_left_taillight: 'Rear Left Taillight', rear_right_taillight: 'Rear Right Taillight',
+              front_left_wheel: 'Front Left Wheel', front_right_wheel: 'Front Right Wheel',
+              rear_left_wheel: 'Rear Left Wheel', rear_right_wheel: 'Rear Right Wheel',
+              other: 'Other',
             }
             const grouped = new Map<string, typeof inspection.damages>()
             for (const d of inspection.damages) {

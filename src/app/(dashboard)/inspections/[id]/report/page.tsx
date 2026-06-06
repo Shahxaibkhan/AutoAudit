@@ -29,6 +29,14 @@ const PANEL_LABELS: Record<string, string> = {
   passenger_mirror: 'Passenger Mirror',
   driver_rocker: 'Driver Sill',
   passenger_rocker: 'Passenger Sill',
+  front_left_headlight: 'Front Left Headlight',
+  front_right_headlight: 'Front Right Headlight',
+  rear_left_taillight: 'Rear Left Taillight',
+  rear_right_taillight: 'Rear Right Taillight',
+  front_left_wheel: 'Front Left Wheel',
+  front_right_wheel: 'Front Right Wheel',
+  rear_left_wheel: 'Rear Left Wheel',
+  rear_right_wheel: 'Rear Right Wheel',
   other: 'Other',
 }
 
