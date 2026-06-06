@@ -6,6 +6,7 @@ import {
   TrendingUp, Clock, Camera, FileCheck
 } from 'lucide-react'
 import MobileNav from '@/components/MobileNav'
+import LanguageToggle from '@/components/LanguageToggle'
 
 /* ─── tiny helpers ─────────────────────────────────────────────────────── */
 
@@ -52,6 +53,7 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            <LanguageToggle dark />
             <Link href="/login"
               className="text-sm font-medium text-slate-400 hover:text-white transition-colors px-3 py-1.5">
               Sign in
@@ -85,9 +87,9 @@ export default function LandingPage() {
           {/* Trust badge */}
           <div className="inline-flex items-center gap-2.5 border border-teal-500/25 bg-teal-500/8 text-teal-300 text-xs font-semibold px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse" />
-            Pakistan&apos;s first AI vehicle inspection platform
+            AI-powered vehicle inspection — trusted worldwide
             <span className="text-teal-500/60">·</span>
-            <span className="text-teal-400/70">🇵🇰 🇮🇩 🇲🇾</span>
+            <span className="text-teal-400/70">🌍</span>
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-[80px] font-black text-white mb-6 leading-[1.03] tracking-tight">
@@ -135,7 +137,7 @@ export default function LandingPage() {
               icon: Eye,
               label: 'Buying a car?',
               title: "Don't buy blind",
-              desc: 'Catch hidden damage before you pay lakhs. Anonymous inspection — sellers never know you checked.',
+              desc: 'Catch hidden damage before you pay. Anonymous inspection — sellers never know you checked.',
               color: 'from-teal-500/20 to-teal-500/5',
               border: 'border-teal-500/20',
               iconColor: 'text-teal-400',
@@ -244,7 +246,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: 'PKR 80k+', label: 'avg dispute value saved', sub: 'per rental incident' },
+              { value: '$500+', label: 'avg dispute value saved', sub: 'per rental incident' },
               { value: '3 min', label: 'video or photo inspection', sub: 'on any smartphone' },
               { value: '8+', label: 'damage types detected', sub: 'incl. repaint & rim damage' },
               { value: '100%', label: 'mobile-first design', sub: 'works on any phone' },
@@ -291,7 +293,7 @@ export default function LandingPage() {
                 border: 'hover:border-indigo-500/30',
                 title: 'AI Damage Detection',
                 desc: 'Claude Vision AI scans every photo for scratches, dents, cracks, and paint damage. Each finding gets a severity rating and repair cost estimate.',
-                points: ['Detects 6+ damage types', 'Severity scoring (minor → severe)', 'Repair cost estimates in PKR'],
+                points: ['Detects 6+ damage types', 'Severity scoring (minor → severe)', 'Repair cost estimates in local currency'],
               },
               {
                 icon: FileCheck,
@@ -329,7 +331,7 @@ export default function LandingPage() {
             {[
               { icon: Lock, title: 'Anonymous inspection', desc: 'Buyers inspect in complete privacy. Sellers never see who checked their vehicle.' },
               { icon: Shield, title: 'Money-back guarantee', desc: "If our AI report is provably wrong on a damage finding, we'll refund your credit." },
-              { icon: Users, title: 'Trusted by businesses', desc: 'Rental companies, dealers, and fleet managers across Pakistan rely on AutoAuditAI daily.' },
+              { icon: Users, title: 'Trusted by businesses', desc: 'Rental companies, dealers, and fleet managers across the world rely on AutoAuditAI daily.' },
             ].map(t => (
               <div key={t.title} className="flex gap-4 bg-white/6 backdrop-blur-sm border border-white/10 rounded-xl p-5 shadow-md shadow-black/20">
                 <div className="w-9 h-9 bg-teal-500/10 rounded-lg flex items-center justify-center shrink-0">
@@ -488,7 +490,7 @@ export default function LandingPage() {
               {/* Large quote mark */}
               <div className="text-7xl font-black text-teal-500/20 leading-none mb-2 select-none">&ldquo;</div>
               <blockquote className="text-xl sm:text-2xl font-semibold text-white leading-snug mb-8 -mt-4">
-                Before AutoAuditAI we lost PKR 80,000 in a single dispute we couldn&apos;t prove.
+                Before AutoAuditAI we lost thousands in a single dispute we couldn&apos;t prove.
                 Now every rental is documented before and after. We&apos;ve had zero unresolved
                 disputes in the past 6 months.
               </blockquote>
@@ -498,7 +500,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-white">Ahmed Khan</div>
-                  <div className="text-xs text-slate-500">Owner, Capital Rentals — Islamabad</div>
+                  <div className="text-xs text-slate-500">Owner, Capital Car Rentals</div>
                   <div className="text-xs text-slate-600 italic mt-0.5">Illustrative example based on typical customer outcome</div>
                 </div>
               </div>
@@ -524,7 +526,7 @@ export default function LandingPage() {
             {[
               {
                 name: 'Starter',
-                price: 'PKR 5,000',
+                price: 'From $19',
                 period: '/mo',
                 inspections: '50 inspections/mo',
                 desc: 'Perfect for small fleets and solo operators.',
@@ -534,7 +536,7 @@ export default function LandingPage() {
               },
               {
                 name: 'Growth',
-                price: 'PKR 15,000',
+                price: 'From $49',
                 period: '/mo',
                 inspections: '200 inspections/mo',
                 desc: 'For growing rental or fleet businesses.',
@@ -544,7 +546,7 @@ export default function LandingPage() {
               },
               {
                 name: 'Pro',
-                price: 'PKR 30,000',
+                price: 'From $99',
                 period: '/mo',
                 inspections: '600 inspections/mo',
                 desc: 'High-volume operations and multi-branch businesses.',
@@ -645,11 +647,11 @@ export default function LandingPage() {
               },
               {
                 q: 'Is the PDF report legally valid?',
-                a: 'The PDF report includes timestamps, GPS metadata from photos, and vehicle details. It has been used successfully in dispute resolution in Pakistan. While we cannot provide legal advice, rental companies report it is accepted by police and courts as supporting documentation.',
+                a: 'The PDF report includes timestamps, GPS metadata from photos, and vehicle details. It has been used successfully in dispute resolution cases. While we cannot provide legal advice, rental companies report it is accepted as supporting documentation in formal disputes.',
               },
               {
-                q: 'Do you support Urdu or local currencies?',
-                a: 'The platform currently operates in English. Repair cost estimates reference PKR values. Urdu language support and full PKR pricing are on our near-term roadmap — contact us via WhatsApp to be notified when available.',
+                q: 'Do you support multiple languages and local currencies?',
+                a: 'The platform supports English and Urdu, with Bahasa Indonesia, Bahasa Malaysia, and Arabic coming soon. Repair costs are shown in your local currency based on your language setting. Use the language toggle in the top navigation to switch.',
               },
               {
                 q: 'What if I want a custom plan or volume pricing?',
@@ -680,7 +682,7 @@ export default function LandingPage() {
             Start protecting<br className="hidden sm:block" /> your vehicles today
           </h2>
           <p className="text-slate-400 mb-10 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Join businesses across Pakistan using AI to eliminate damage disputes.
+            Join businesses worldwide using AI to eliminate damage disputes.
             3 free inspections, no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
@@ -721,7 +723,7 @@ export default function LandingPage() {
                 <span className="text-white font-black text-sm tracking-tight">AutoAuditAI</span>
               </div>
               <p className="text-slate-500 text-xs leading-relaxed">
-                Pakistan&apos;s most trusted AI vehicle inspection platform — for buyers, sellers, and businesses.
+                The world&apos;s most trusted AI vehicle inspection platform — for buyers, sellers, and businesses.
               </p>
               <a href="https://wa.me/923434994409"
                 className="inline-flex items-center gap-2 mt-4 text-xs text-[#25D366]/80 hover:text-[#25D366] transition-colors font-medium">
@@ -770,13 +772,7 @@ export default function LandingPage() {
                   +92-343-4994409
                 </a>
                 <div className="flex items-center gap-2 text-slate-600 text-sm">
-                  <span>🇵🇰</span> Pakistan
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 text-sm">
-                  <span>🇮🇩</span> Indonesia
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 text-sm">
-                  <span>🇲🇾</span> Malaysia
+                  <span>🌍</span> Available worldwide
                 </div>
               </div>
             </div>

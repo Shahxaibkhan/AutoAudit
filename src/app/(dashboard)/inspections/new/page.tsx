@@ -245,7 +245,7 @@ function NewInspectionForm() {
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone</label>
                     <input type="tel" value={form.renterPhone} onChange={f('renterPhone')}
                       className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      placeholder="+92 300 1234567" />
+                      placeholder="+1 234 567 8900" />
                   </div>
                 </div>
 

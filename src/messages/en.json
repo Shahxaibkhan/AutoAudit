@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How it works",
+    "pricing": "Pricing",
+    "signIn": "Sign in",
+    "startFree": "Start free"
+  },
+  "hero": {
+    "badge": "AI-powered vehicle inspection — trusted worldwide",
+    "title1": "The trust layer for",
+    "title2": "every car deal.",
+    "subtitle": "AI-powered damage inspection for buyers who want truth, sellers who want higher offers, and businesses who need dispute-proof documentation — results in under 3 minutes.",
+    "cta": "Start free — 3 inspections",
+    "demo": "Live demo"
+  },
+  "tiles": {
+    "buyer": {
+      "label": "Buying a car?",
+      "title": "Don't buy blind",
+      "desc": "Catch hidden damage before you pay. Anonymous inspection — sellers never know you checked."
+    },
+    "seller": {
+      "label": "Selling a car?",
+      "title": "Sell faster, earn more",
+      "desc": "An AI-verified condition report builds buyer confidence instantly. Documented cars sell for more."
+    },
+    "business": {
+      "label": "Running a business?",
+      "title": "Zero dispute losses",
+      "desc": "Every rental or fleet vehicle documented before and after. Disputes resolved in minutes, not months."
+    }
+  },
+  "currency": {
+    "symbol": "$",
+    "code": "USD",
+    "locale": "en-US"
+  }
+}

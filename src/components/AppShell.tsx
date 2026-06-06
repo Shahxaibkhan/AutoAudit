@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { ScanLine, LayoutDashboard, Car, ClipboardList, LogOut, ChevronRight, Menu, X, CreditCard, Zap, ShieldCheck, Settings } from 'lucide-react'
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
+import LanguageToggle from '@/components/LanguageToggle'
 
 const nav = [
   { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
@@ -97,6 +98,9 @@ function UserFooter({ user, onAction }: { user: { name?: string | null; email?: 
           <p className="text-xs font-semibold text-white truncate">{user.name || 'User'}</p>
           <p className="text-xs text-slate-500 truncate">{user.email}</p>
         </div>
+      </div>
+      <div className="px-3 py-2">
+        <LanguageToggle />
       </div>
       <button
         onClick={() => { onAction?.(); signOut({ callbackUrl: '/login' }) }}

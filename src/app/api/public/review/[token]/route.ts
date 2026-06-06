@@ -48,7 +48,7 @@ export async function GET(_: Request, { params }: { params: { token: string } })
       renterName: inspection.renterName,
       ownerSignedAt: inspection.ownerSignedAt,
       ownerPhone: inspection.ownerPhone
-        ? `+92***${inspection.ownerPhone.slice(-4)}`
+        ? `***${inspection.ownerPhone.slice(-4)}`
         : null,
     },
     damages: { severe, moderate, minor },

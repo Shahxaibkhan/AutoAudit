@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "features": "Fitur",
+    "howItWorks": "Cara Kerja",
+    "pricing": "Harga",
+    "signIn": "Masuk",
+    "startFree": "Mulai Gratis"
+  },
+  "hero": {
+    "badge": "Inspeksi kendaraan bertenaga AI — dipercaya di seluruh dunia",
+    "title1": "Lapisan kepercayaan untuk",
+    "title2": "setiap transaksi mobil.",
+    "subtitle": "Inspeksi kerusakan bertenaga AI untuk pembeli, penjual, dan bisnis — hasil dalam 3 menit.",
+    "cta": "Mulai gratis — 3 inspeksi",
+    "demo": "Demo langsung"
+  },
+  "tiles": {
+    "buyer": {
+      "label": "Membeli mobil?",
+      "title": "Jangan beli buta",
+      "desc": "Temukan kerusakan tersembunyi sebelum membayar. Inspeksi anonim — penjual tidak pernah tahu."
+    },
+    "seller": {
+      "label": "Menjual mobil?",
+      "title": "Jual lebih cepat, untung lebih banyak",
+      "desc": "Laporan kondisi terverifikasi AI membangun kepercayaan pembeli secara instan."
+    },
+    "business": {
+      "label": "Menjalankan bisnis?",
+      "title": "Nol kerugian sengketa",
+      "desc": "Setiap kendaraan rental atau armada terdokumentasi sebelum dan sesudah."
+    }
+  },
+  "currency": {
+    "symbol": "Rp",
+    "code": "IDR",
+    "locale": "id-ID"
+  }
+}

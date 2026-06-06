@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "features": "Ciri-ciri",
+    "howItWorks": "Cara Ia Berfungsi",
+    "pricing": "Harga",
+    "signIn": "Log Masuk",
+    "startFree": "Mulakan Percuma"
+  },
+  "hero": {
+    "badge": "Pemeriksaan kenderaan berkuasa AI — dipercayai di seluruh dunia",
+    "title1": "Lapisan kepercayaan untuk",
+    "title2": "setiap urusan kereta.",
+    "subtitle": "Pemeriksaan kerosakan berkuasa AI untuk pembeli, penjual dan perniagaan — keputusan dalam 3 minit.",
+    "cta": "Mulakan percuma — 3 pemeriksaan",
+    "demo": "Demo langsung"
+  },
+  "tiles": {
+    "buyer": {
+      "label": "Membeli kereta?",
+      "title": "Jangan beli buta",
+      "desc": "Kesan kerosakan tersembunyi sebelum membayar. Pemeriksaan tanpa nama — penjual tidak pernah tahu."
+    },
+    "seller": {
+      "label": "Menjual kereta?",
+      "title": "Jual lebih cepat, untung lebih banyak",
+      "desc": "Laporan keadaan yang disahkan AI membina keyakinan pembeli dengan segera."
+    },
+    "business": {
+      "label": "Menjalankan perniagaan?",
+      "title": "Sifar kerugian pertikaian",
+      "desc": "Setiap kenderaan sewa atau armada didokumenkan sebelum dan selepas."
+    }
+  },
+  "currency": {
+    "symbol": "RM",
+    "code": "MYR",
+    "locale": "ms-MY"
+  }
+}

@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import SessionProvider from '@/components/SessionProvider'
 import CookieBanner from '@/components/CookieBanner'
 import PostHogProvider from '@/components/PostHogProvider'
+import { I18nProvider } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -19,6 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="bg-slate-50 min-h-screen">
         <SessionProvider session={session}>
+          <I18nProvider>
           <PostHogProvider>
           {children}
           <CookieBanner />
@@ -35,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }}
           />
           </PostHogProvider>
+          </I18nProvider>
         </SessionProvider>
       </body>
     </html>

@@ -342,13 +342,13 @@ export default async function ReportPage({ params }: { params: { id: string } })
                   {inspection.ownerSignedAt && (
                     <p className="text-slate-600">
                       Owner signed: <strong>{new Date(inspection.ownerSignedAt).toLocaleString()}</strong>
-                      {inspection.ownerPhone && ` · +92***${inspection.ownerPhone.slice(-4)}`}
+                      {inspection.ownerPhone && ` · ***${inspection.ownerPhone.slice(-4)}`}
                     </p>
                   )}
                   {inspection.customerSignedAt && (
                     <p className="text-slate-600">
                       Customer signed: <strong>{new Date(inspection.customerSignedAt).toLocaleString()}</strong>
-                      {inspection.customerPhone && ` · +92***${inspection.customerPhone.slice(-4)}`}
+                      {inspection.customerPhone && ` · ***${inspection.customerPhone.slice(-4)}`}
                     </p>
                   )}
                 </div>
