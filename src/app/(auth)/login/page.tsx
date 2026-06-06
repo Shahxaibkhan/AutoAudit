@@ -28,6 +28,8 @@ export default function LoginPage() {
       setUnverifiedEmail(form.email)
     } else if (res?.error === 'too_many_attempts') {
       toast.error('Too many login attempts. Please wait 15 minutes and try again.')
+    } else if (res?.error === 'account_blocked') {
+      toast.error('Your account has been suspended. Contact support at +92-343-4994409.', { duration: 6000 })
     } else if (res?.error) {
       toast.error('Invalid email or password')
     } else {

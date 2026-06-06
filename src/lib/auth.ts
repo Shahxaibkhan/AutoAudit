@@ -54,6 +54,11 @@ export const authOptions: NextAuthOptions = {
 
         clearRateLimit(emailKey)
 
+        // Block blocked users
+        if (user.isBlocked) {
+          throw new Error('account_blocked')
+        }
+
         // Block unverified emails (demo accounts bypass)
         const isDemo = user.email.startsWith('demo-') && user.email.includes('@autoauditai.com')
         if (!isDemo && !user.emailVerified) {

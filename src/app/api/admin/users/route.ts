@@ -43,6 +43,7 @@ export async function GET() {
       lastActiveAt: u.inspections[0]?.createdAt.toISOString() ?? null,
       inspectionCount: u._count.inspections,
       vehicleCount: u._count.vehicles,
+      isBlocked: u.isBlocked,
     }))
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Users, Zap, AlertTriangle, TrendingUp, Gift, Clock, ShieldCheck, RotateCcw, ChevronDown, Search } from 'lucide-react'
+import Link from 'next/link'
+import { Users, Zap, AlertTriangle, TrendingUp, Gift, Clock, ShieldCheck, RotateCcw, ChevronDown, Search, Ban, ExternalLink, XCircle } from 'lucide-react'
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
 import toast from 'react-hot-toast'
 
@@ -18,6 +19,20 @@ interface UserRow {
   lastActiveAt: string | null
   inspectionCount: number
   vehicleCount: number
+  isBlocked: boolean
+}
+
+interface FailedInspection {
+  id: string
+  status: string
+  type: string
+  imageCount: number
+  vehicle: string
+  licensePlate: string
+  userName: string | null
+  userEmail: string
+  createdAt: string
+  stuckFor: number
 }
 
 function PlanBadge({ plan }: { plan: string }) {
@@ -60,10 +75,12 @@ function timeAgo(iso: string | null): string {
 
 export default function AdminPage() {
   const [users, setUsers] = useState<UserRow[]>([])
+  const [failed, setFailed] = useState<FailedInspection[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'trial' | 'expired' | 'paid' | 'sales'>('all')
   const [acting, setActing] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'users' | 'failed'>('users')
 
   async function load() {
     const res = await fetch('/api/admin/users')
@@ -73,7 +90,10 @@ export default function AdminPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    fetch('/api/admin/failed').then(r => r.json()).then(setFailed).catch(() => {})
+  }, [])
 
   async function doAction(userId: string, action: string, value?: number | string, label?: string) {
     setActing(`${userId}-${action}`)
@@ -125,10 +145,23 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Admin Panel</h1>
-        <p className="text-slate-400 text-sm mt-1">Manage accounts, gift credits, run your sales motion</p>
+      {/* Header + tabs */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Admin Panel</h1>
+          <p className="text-slate-400 text-sm mt-1">Manage accounts, gift credits, run your sales motion</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === 'users' ? 'bg-teal-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
+            Users ({users.length})
+          </button>
+          <button onClick={() => setActiveTab('failed')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${activeTab === 'failed' ? 'bg-red-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
+            {failed.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+            Failed ({failed.length})
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -152,8 +185,9 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Filters + search */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Filters + search — users tab only */}
+      {activeTab === 'failed' && null}
+      <div className={`flex flex-col sm:flex-row gap-3 ${activeTab !== 'users' ? 'hidden' : ''}`}>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -231,26 +265,42 @@ export default function AdminPage() {
                               {busy('extend_trial') ? '…' : '+7d'}
                             </button>
                             {u.plan !== 'SALES' ? (
-                              <button
-                                title="Grant Sales account (unlimited)"
-                                disabled={!!acting}
+                              <button title="Grant Sales account" disabled={!!acting}
                                 onClick={() => doAction(u.id, 'set_plan', 'SALES', `${u.email} → SALES account`)}
-                                className="flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-700 hover:bg-violet-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
-                              >
+                                className="flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-700 hover:bg-violet-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40">
                                 <ShieldCheck className="w-3 h-3" />
                                 {busy('set_plan') ? '…' : 'Sales'}
                               </button>
                             ) : (
-                              <button
-                                title="Reset to trial"
-                                disabled={!!acting}
+                              <button title="Reset to trial" disabled={!!acting}
                                 onClick={() => doAction(u.id, 'reset_trial', undefined, `Reset ${u.email} to trial`)}
-                                className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
-                              >
+                                className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40">
                                 <RotateCcw className="w-3 h-3" />
                                 {busy('reset_trial') ? '…' : 'Reset'}
                               </button>
                             )}
+                            {/* Block / Unblock */}
+                            {u.isBlocked ? (
+                              <button title="Unblock user" disabled={!!acting}
+                                onClick={() => doAction(u.id, 'unblock', undefined, `Unblocked ${u.email}`)}
+                                className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40">
+                                <RotateCcw className="w-3 h-3" />
+                                {busy('unblock') ? '…' : 'Unblock'}
+                              </button>
+                            ) : (
+                              <button title="Block user" disabled={!!acting}
+                                onClick={() => { if (confirm(`Block ${u.email}?`)) doAction(u.id, 'block', undefined, `Blocked ${u.email}`) }}
+                                className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40">
+                                <Ban className="w-3 h-3" />
+                                {busy('block') ? '…' : 'Block'}
+                              </button>
+                            )}
+                            {/* View inspections */}
+                            <Link href={`/admin/users/${u.id}`}
+                              className="flex items-center gap-1 px-2 py-1 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors">
+                              <ExternalLink className="w-3 h-3" />
+                              View
+                            </Link>
                           </div>
                         </td>
                       </tr>
@@ -333,7 +383,33 @@ export default function AdminPage() {
                           <span className="truncate">{busy('reset_trial') ? '…' : 'Reset'}</span>
                         </button>
                       )}
+                      {/* Block / View */}
+                      {u.isBlocked ? (
+                        <button disabled={!!acting} onClick={() => doAction(u.id, 'unblock', undefined, `Unblocked`)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold disabled:opacity-40 min-w-0">
+                          <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                          <span>{busy('unblock') ? '…' : 'Unblock'}</span>
+                        </button>
+                      ) : (
+                        <button disabled={!!acting} onClick={() => { if (confirm(`Block ${u.email}?`)) doAction(u.id, 'block', undefined, `Blocked`) }}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 rounded-xl text-xs font-semibold disabled:opacity-40 min-w-0">
+                          <Ban className="w-3.5 h-3.5 shrink-0" />
+                          <span>{busy('block') ? '…' : 'Block'}</span>
+                        </button>
+                      )}
+                      <Link href={`/admin/users/${u.id}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold min-w-0">
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                        <span>View</span>
+                      </Link>
                     </div>
+
+                    {/* Blocked badge */}
+                    {u.isBlocked && (
+                      <div className="flex items-center gap-1.5 text-xs text-red-600 font-semibold">
+                        <Ban className="w-3 h-3" /> Account blocked
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -341,6 +417,39 @@ export default function AdminPage() {
           </>
         )}
       </div>
+
+      {/* Failed inspections tab */}
+      {activeTab === 'failed' && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {failed.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-sm">No failed or stuck inspections</div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {failed.map(f => (
+                <div key={f.id} className="p-4 flex items-start gap-4">
+                  <div className={`shrink-0 mt-0.5 w-2.5 h-2.5 rounded-full ${f.status === 'IN_PROGRESS' ? 'bg-amber-400' : 'bg-red-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-sm font-semibold text-slate-900 truncate">{f.vehicle} · {f.licensePlate}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${f.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                        {f.status === 'IN_PROGRESS' ? 'Stuck in progress' : 'Upload abandoned'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {f.userEmail} · {f.imageCount} photos · stuck {f.stuckFor}m ago
+                    </div>
+                    <div className="text-xs text-slate-400 mt-0.5">{f.type.replace(/_/g, ' ')} · Created {new Date(f.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <Link href={`/inspections/${f.id}`}
+                    className="shrink-0 text-xs text-teal-600 font-semibold hover:underline flex items-center gap-1">
+                    <ExternalLink className="w-3 h-3" /> View
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <p className="text-xs text-slate-400 text-center">
         Only visible to admin accounts configured via <code className="bg-slate-100 px-1 py-0.5 rounded">ADMIN_EMAIL</code> env var

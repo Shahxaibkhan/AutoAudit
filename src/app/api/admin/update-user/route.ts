@@ -61,7 +61,6 @@ export async function POST(req: Request) {
     }
 
     case 'reset_trial': {
-      // Reset back to a fresh 3-credit trial
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -74,6 +73,16 @@ export async function POST(req: Request) {
           subPeriodEnd: null,
         },
       })
+      break
+    }
+
+    case 'block': {
+      await prisma.user.update({ where: { id: userId }, data: { isBlocked: true } })
+      break
+    }
+
+    case 'unblock': {
+      await prisma.user.update({ where: { id: userId }, data: { isBlocked: false } })
       break
     }
 

@@ -43,6 +43,7 @@ model User {
   emailVerified      DateTime?
   tosAcceptedAt      DateTime?
   industry           String?
+  isBlocked          Boolean   @default(false)
   // Subscription
   plan               String       @default("TRIAL")
   trialEndsAt        DateTime?
