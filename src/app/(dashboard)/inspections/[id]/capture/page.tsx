@@ -927,25 +927,19 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
+      {/* Hidden iOS video input — always mounted so checklist can trigger it */}
+      {iosDevice && (
+        <input ref={iosVideoInputRef} type="file" accept="video/*" capture="environment"
+          className="hidden" onChange={handleIosVideoSelect} />
+      )}
+
       {/* ── Mode selection ─────────────────────────────────────────── */}
       {mode === 'select' && (
         <div className="space-y-3">
           <p className="text-slate-500 text-sm mb-5">Choose how to capture this inspection:</p>
 
-          {/* Hidden iOS video file input */}
-          {iosDevice && (
-            <input
-              ref={iosVideoInputRef}
-              type="file"
-              accept="video/*"
-              capture="environment"
-              className="hidden"
-              onChange={handleIosVideoSelect}
-            />
-          )}
-
           <button
-            onClick={() => iosDevice ? iosVideoInputRef.current?.click() : setMode('video')}
+            onClick={() => setMode('video')}
             className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
             <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
               <Video className="w-6 h-6 text-white" />
@@ -956,9 +950,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
                 <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
               </div>
               <p className="text-sm text-slate-500 mt-0.5">
-                {iosDevice
-                  ? 'Opens your iPhone camera. Record a walkaround — AI extracts frames automatically.'
-                  : 'Record a 60-second walk around. AI extracts the best frames automatically.'}
+                Record a 60-second walkaround — AI extracts the best frames automatically.
               </p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
@@ -1001,9 +993,10 @@ export default function CapturePage({ params }: { params: { id: string } }) {
               className="py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
               Go back
             </button>
-            <button onClick={() => startCamera()}
+            <button
+              onClick={() => iosDevice ? iosVideoInputRef.current?.click() : startCamera()}
               className="py-3 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-400 transition-colors">
-              Open Camera →
+              {iosDevice ? 'Open iPhone Camera →' : 'Open Camera →'}
             </button>
           </div>
         </div>
