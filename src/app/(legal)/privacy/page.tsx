@@ -1,96 +1,148 @@
 import Link from 'next/link'
-import { ScanLine } from 'lucide-react'
+import { ScanLine, ArrowLeft } from 'lucide-react'
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-16">
-        <Link href="/" className="inline-flex items-center gap-2 mb-10">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center">
-            <ScanLine className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-slate-50">
+      {/* Branded header */}
+      <div className="bg-slate-950 border-b border-white/8 px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/30">
+              <ScanLine className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-white font-black tracking-tight">AutoAuditAI</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm font-medium transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to home
+          </Link>
+        </div>
+      </div>
+
+      {/* Page header */}
+      <div className="bg-white border-b border-slate-100 px-6 py-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full mb-4">
+            Legal
           </div>
-          <span className="font-black text-slate-900">AutoAuditAI</span>
-        </Link>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-2">Privacy Policy</h1>
+          <p className="text-slate-400 text-sm">Last updated: June 2026 · We keep this simple and honest</p>
+        </div>
+      </div>
 
-        <h1 className="text-3xl font-black text-slate-900 mb-2">Privacy Policy</h1>
-        <p className="text-slate-400 text-sm mb-10">Last updated: June 2026</p>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
-        <div className="space-y-8 text-slate-700 leading-relaxed">
+          {/* Summary banner */}
+          <div className="bg-teal-50 border-b border-teal-100 px-6 py-5">
+            <h2 className="text-sm font-bold text-teal-800 mb-1">The short version</h2>
+            <p className="text-sm text-teal-700">
+              We collect only what we need to run the service. We don&apos;t sell your data. You can delete everything at any time from your account settings.
+            </p>
+          </div>
 
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">1. What We Collect</h2>
-            <ul className="space-y-2 list-disc list-inside">
-              <li><strong>Account information:</strong> name, email, business name, phone number, industry</li>
-              <li><strong>Vehicle information:</strong> make, model, year, license plate, colour</li>
-              <li><strong>Inspection media:</strong> photos and video recordings you upload for analysis</li>
-              <li><strong>AI-generated reports:</strong> damage findings, grades, and descriptions</li>
-              <li><strong>Usage data:</strong> pages visited, features used, inspection counts</li>
-              <li><strong>Payment information:</strong> handled by Stripe — we do not store card numbers</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">2. How We Use Your Data</h2>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>To provide AI-powered vehicle inspection reports</li>
-              <li>To send transactional emails (verification, inspection completion, password reset)</li>
-              <li>To improve AI detection accuracy (aggregate, anonymised analysis only)</li>
-              <li>To manage your subscription and billing</li>
-              <li>To provide customer support</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">3. Data Storage and Security</h2>
-            <p>Your data is stored on secure cloud infrastructure (Neon PostgreSQL, Vercel Blob Storage). Media files are stored encrypted. We use industry-standard security practices including bcrypt password hashing and JWT session tokens. We do not sell your data to third parties.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">4. Third-Party Services</h2>
-            <ul className="space-y-2 list-disc list-inside">
-              <li><strong>Google Gemini / Anthropic Claude:</strong> Photos are sent to AI APIs for analysis. Media is not retained by these providers beyond the API call.</li>
-              <li><strong>Stripe:</strong> Handles payment processing. Subject to Stripe's privacy policy.</li>
-              <li><strong>Vercel:</strong> Hosting and edge infrastructure. Subject to Vercel's privacy policy.</li>
-              <li><strong>Resend:</strong> Transactional email delivery.</li>
-              <li><strong>PostHog:</strong> Product analytics (anonymised usage data).</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">5. Media Retention</h2>
-            <p>Inspection photos and video frames are stored for as long as your account is active. You can delete individual inspections at any time from your dashboard. Deleting an inspection permanently removes associated media from our storage.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">6. Your Rights</h2>
-            <ul className="space-y-2 list-disc list-inside">
-              <li><strong>Access:</strong> You can view all your data in your dashboard at any time</li>
-              <li><strong>Export:</strong> Contact us to request a copy of your data</li>
-              <li><strong>Deletion:</strong> You can delete your account and all associated data from Settings → Account → Delete Account</li>
-              <li><strong>Correction:</strong> You can update your profile information from the dashboard</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">7. Cookies</h2>
-            <p>We use essential cookies for session management (NextAuth.js) and optional analytics cookies (PostHog). You can decline analytics cookies via the cookie consent banner. Essential cookies cannot be disabled as they are required for login to work.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">8. Children</h2>
-            <p>AutoAuditAI is not intended for users under 18. We do not knowingly collect data from minors.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-3">9. Contact</h2>
-            <p>For privacy concerns or data requests, contact us at <a href="tel:+923434994409" className="text-teal-600 hover:underline">+92-343-4994409</a> or via <a href="https://wa.me/923434994409" className="text-teal-600 hover:underline">WhatsApp</a>.</p>
-          </section>
-
+          <div className="divide-y divide-slate-100">
+            {[
+              {
+                n: '1', title: 'What We Collect',
+                list: [
+                  'Account: name, email, business name, phone, industry',
+                  'Vehicles: make, model, year, licence plate, colour',
+                  'Inspection media: photos and video frames you upload for analysis',
+                  'AI reports: damage findings, grades, and descriptions generated from your media',
+                  'Usage: pages visited, features used, inspection counts (via PostHog analytics)',
+                  'Payments: processed by Stripe — we never store card numbers',
+                ],
+              },
+              {
+                n: '2', title: 'How We Use Your Data',
+                list: [
+                  'To provide AI-powered vehicle inspection reports',
+                  'To send transactional emails (verification, completion notifications, password resets)',
+                  'To improve AI detection accuracy using aggregate, anonymised analysis only',
+                  'To manage your subscription and billing',
+                  'To provide customer support',
+                ],
+              },
+              {
+                n: '3', title: 'Data Storage and Security',
+                body: 'Your data is stored on secure cloud infrastructure (Neon PostgreSQL, Vercel Blob Storage). Media files are stored with encryption. We use bcrypt password hashing, JWT session tokens, and HTTPS on all connections. We do not sell your data to third parties.',
+              },
+              {
+                n: '4', title: 'Third-Party Services',
+                list: [
+                  'Google Gemini / Anthropic Claude: Photos are sent to AI APIs for analysis. Media is not retained beyond the API call.',
+                  'Stripe: Handles payment processing — subject to Stripe\'s privacy policy.',
+                  'Vercel: Hosting and edge infrastructure.',
+                  'Resend: Transactional email delivery.',
+                  'PostHog: Product analytics (anonymised usage data — respects your cookie consent choice).',
+                ],
+              },
+              {
+                n: '5', title: 'Media Retention',
+                body: 'Inspection photos and video frames are stored for as long as your account is active. Deleting an inspection permanently removes associated media from our storage.',
+              },
+              {
+                n: '6', title: 'Your Rights',
+                list: [
+                  'Access: View all your data in your dashboard at any time',
+                  'Delete: Go to Settings → Delete Account to permanently remove all your data',
+                  'Export: Contact us via WhatsApp to request a copy of your data',
+                  'Correction: Update your profile from the dashboard at any time',
+                  'Cookie opt-out: Decline analytics cookies via the banner on our website',
+                ],
+              },
+              {
+                n: '7', title: 'Cookies',
+                body: 'We use essential session cookies (required for login) and optional analytics cookies (PostHog). You can decline analytics cookies via the cookie consent banner. Essential cookies cannot be disabled — they are required for the app to function.',
+              },
+              {
+                n: '8', title: 'Children',
+                body: 'AutoAuditAI is not intended for users under 18. We do not knowingly collect data from minors.',
+              },
+              {
+                n: '9', title: 'Changes to This Policy',
+                body: 'We may update this policy. We will notify registered users by email for significant changes. Continued use of the Service after changes constitutes acceptance.',
+              },
+              {
+                n: '10', title: 'Contact',
+                body: null,
+                contact: true,
+              },
+            ].map((section) => (
+              <div key={section.n} className="px-6 py-6">
+                <h2 className="text-base font-bold text-slate-900 mb-2.5">{section.n}. {section.title}</h2>
+                {section.body && <p className="text-sm text-slate-600 leading-relaxed">{section.body}</p>}
+                {section.list && (
+                  <ul className="space-y-1.5">
+                    {section.list.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                        <span className="text-teal-500 mt-0.5 shrink-0">•</span> {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {section.contact && (
+                  <p className="text-sm text-slate-600">
+                    For privacy concerns or data requests, contact us via{' '}
+                    <a href="https://wa.me/923434994409" className="text-teal-600 hover:underline font-medium">WhatsApp</a>
+                    {' '}or{' '}
+                    <a href="tel:+923434994409" className="text-teal-600 hover:underline font-medium">+92-343-4994409</a>.
+                    We respond within 48 hours.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-100 flex gap-6 text-sm text-slate-400">
-          <Link href="/" className="hover:text-slate-600">← Back to home</Link>
-          <Link href="/terms" className="hover:text-slate-600">Terms of Service</Link>
+        <div className="flex items-center justify-between mt-8 text-xs text-slate-400">
+          <span>© 2026 AutoAuditAI</span>
+          <div className="flex gap-4">
+            <Link href="/terms" className="hover:text-slate-600 transition-colors">Terms of Service</Link>
+            <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
+          </div>
         </div>
       </div>
     </div>
