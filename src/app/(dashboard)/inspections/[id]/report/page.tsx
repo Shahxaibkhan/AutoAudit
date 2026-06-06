@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
-import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
+import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels, inspectionReportTitle, isSingleInspection } from '@/lib/utils'
 import Image from 'next/image'
 import DownloadReportButton from '@/components/DownloadReportButton'
 import LightboxImage from '@/components/LightboxImage'
@@ -139,6 +139,8 @@ export default async function ReportPage({ params }: { params: { id: string } })
 
   const newByPanel = groupByPanel(newDamages)
   const existingByPanel = groupByPanel(existingDamages)
+  const isB2C = isSingleInspection(inspection.type)
+  const reportTitle = isB2C ? inspectionReportTitle(inspection.type) : 'Inspection Report'
 
   return (
     <div>
@@ -147,7 +149,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Inspection Report</h1>
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">{reportTitle}</h1>
           <p className="text-slate-400 text-xs sm:text-sm mt-0.5">{formatDate(inspection.createdAt)}</p>
         </div>
         <DownloadReportButton inspectionId={params.id} />
@@ -268,10 +270,23 @@ export default async function ReportPage({ params }: { params: { id: string } })
                     ? (newDamages.length > 0
                         ? `${newDamages.length} new damage(s) detected`
                         : 'No new damage — vehicle returned in same condition')
-                    : `${inspectionTypeLabel(inspection.type)} inspection complete`
+                    : isB2C
+                      ? (existingDamages.length === 0
+                          ? 'No damage found — vehicle looks clean'
+                          : `${existingDamages.length} issue${existingDamages.length !== 1 ? 's' : ''} found`)
+                      : `${inspectionTypeLabel(inspection.type)} inspection complete`
                   }
                 </p>
                 <p className="text-sm text-slate-600 mt-1">{aiReport.summary}</p>
+                {/* WhatsApp share for buyer inspection */}
+                {inspection.type === 'BUYER_INSPECTION' && (
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(`Pre-purchase inspection report for ${inspection.vehicle.make} ${inspection.vehicle.model} ${inspection.vehicle.year} — ${inspection.vehicle.licensePlate}. Grade: ${aiReport.letterGrade ?? 'N/A'}. ${existingDamages.length} issue(s) found.`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-3 bg-[#25D366] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
+                    <span>📤</span> Share report via WhatsApp
+                  </a>
+                )}
               </div>
             </div>
           </div>

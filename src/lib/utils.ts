@@ -47,9 +47,20 @@ export function fileToBase64(file: File): Promise<string> {
 }
 
 const AFTER_TYPES = ['POST_RENTAL', 'POST_SALE', 'SHIFT_END', 'POST_CLAIM', 'POST_REPAIR', 'LEASE_END']
+export const SINGLE_INSPECTION_TYPES = ['JUST_CHECK', 'BUYER_INSPECTION', 'SELLER_INSPECTION', 'MY_CAR']
+
+export function isSingleInspection(type: string): boolean {
+  return SINGLE_INSPECTION_TYPES.includes(type)
+}
 
 export function inspectionTypeLabel(type: string): string {
   const labels: Record<string, string> = {
+    // B2C — single inspection
+    JUST_CHECK:          'Just check a car',
+    BUYER_INSPECTION:    'Buying a used car',
+    SELLER_INSPECTION:   'Selling my car',
+    MY_CAR:              'My own car',
+    // B2B — before & after
     PRE_RENTAL: 'Pre-rental',   POST_RENTAL: 'Post-rental',
     PRE_SALE: 'Pre-sale',       POST_SALE: 'Post-sale',
     SHIFT_START: 'Shift start', SHIFT_END: 'Shift end',
@@ -60,10 +71,22 @@ export function inspectionTypeLabel(type: string): string {
   return labels[type] ?? type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
 
+export function inspectionReportTitle(type: string): string {
+  const titles: Record<string, string> = {
+    JUST_CHECK:        'Vehicle Condition Report',
+    BUYER_INSPECTION:  'Pre-Purchase Vehicle Report',
+    SELLER_INSPECTION: 'Vehicle for Sale — Condition Report',
+    MY_CAR:            'My Car — Condition Snapshot',
+  }
+  return titles[type] ?? 'Inspection Report'
+}
+
 export function inspectionTypeBadge(type: string): string {
-  return AFTER_TYPES.includes(type)
-    ? 'bg-indigo-50 text-indigo-700'
-    : 'bg-teal-50 text-teal-700'
+  if (type === 'BUYER_INSPECTION') return 'bg-blue-50 text-blue-700'
+  if (type === 'SELLER_INSPECTION') return 'bg-purple-50 text-purple-700'
+  if (type === 'MY_CAR') return 'bg-emerald-50 text-emerald-700'
+  if (type === 'JUST_CHECK') return 'bg-slate-100 text-slate-700'
+  return AFTER_TYPES.includes(type) ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700'
 }
 
 export function inspectionTypeBarColor(type: string): string {
