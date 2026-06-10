@@ -137,12 +137,14 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Business name</label>
-              <input type="text" value={form.businessName} onChange={f('businessName')}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 bg-slate-50 focus:bg-white transition-all"
-                placeholder="My Car Rentals LLC" />
-            </div>
+            {form.industry === 'business' && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Business name</label>
+                <input type="text" value={form.businessName} onChange={f('businessName')}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 bg-slate-50 focus:bg-white transition-all"
+                  placeholder="My Car Rentals LLC" />
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">I am signing up as *</label>
