@@ -37,8 +37,29 @@ export default async function DashboardPage() {
     { label: 'New Damages', value: damagesFound, icon: AlertTriangle, gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/20' },
   ]
 
+  const isDemo = (session?.user as { email?: string })?.email?.startsWith('demo-') &&
+    (session?.user as { email?: string })?.email?.includes('@autoauditai.com')
+
   return (
     <div className="space-y-8">
+      {/* Demo account banner */}
+      {isDemo && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <span className="text-lg shrink-0">🎭</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-800">You&apos;re viewing a demo account</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              This account shows pre-loaded sample data. You can browse reports and the UI, but AI analysis is disabled.
+              To inspect your own vehicles, create a free account.
+            </p>
+          </div>
+          <Link href="/register"
+            className="shrink-0 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+            Sign up free →
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>

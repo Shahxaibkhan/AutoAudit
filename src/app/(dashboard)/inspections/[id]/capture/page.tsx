@@ -108,11 +108,11 @@ const CHECKLIST = [
 
 /* ── Walkaround direction guide (time-based) ─────────────────────────── */
 const WALKAROUND_STEPS = [
-  { label: 'Front',      hint: 'Face the front — start recording',     icon: ArrowUp,    color: 'text-teal-400',   timeRange: [0,  12] },
-  { label: 'Right side', hint: 'Walk slowly to the right side →',      icon: ArrowRight, color: 'text-blue-400',   timeRange: [12, 27] },
-  { label: 'Rear',       hint: 'Continue walking to the rear',         icon: ArrowDown,  color: 'text-purple-400', timeRange: [27, 42] },
-  { label: 'Left side',  hint: 'Walk slowly to the left side ←',       icon: ArrowLeft,  color: 'text-indigo-400', timeRange: [42, 57] },
-  { label: 'Complete!',  hint: 'Return to the front — great walkaround!',icon: CheckCircle,color: 'text-emerald-400',timeRange: [57, 90] },
+  { label: 'Front',      hint: 'Face the front — start recording',        icon: ArrowUp,    color: 'text-teal-400',   timeRange: [0,  10] },
+  { label: 'Right side', hint: 'Walk to the right side →',                icon: ArrowRight, color: 'text-blue-400',   timeRange: [10, 22] },
+  { label: 'Rear',       hint: 'Walk to the rear of the car',             icon: ArrowDown,  color: 'text-purple-400', timeRange: [22, 34] },
+  { label: 'Left side',  hint: 'Walk to the left side ←',                 icon: ArrowLeft,  color: 'text-indigo-400', timeRange: [34, 46] },
+  { label: 'Complete!',  hint: 'Return to the front — all 4 sides done!', icon: CheckCircle,color: 'text-emerald-400',timeRange: [46, 90] },
 ]
 
 function getWalkaroundStep(elapsed: number) {
@@ -778,6 +778,23 @@ export default function CapturePage({ params }: { params: { id: string } }) {
       const data = await res.json()
       clearInterval(stepTimer)
       if (!res.ok) {
+        if (data.error === 'demo_account') {
+          toast(
+            (t) => (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold">Demo account — analysis disabled</span>
+                <span className="text-xs text-slate-300">Demo accounts show pre-loaded sample data only. Sign up free to inspect your own vehicles.</span>
+                <a href="/register"
+                  className="mt-1 text-xs font-bold text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                  onClick={() => toast.dismiss(t.id)}>
+                  Create a free account →
+                </a>
+              </div>
+            ),
+            { duration: 8000, icon: '🔒' }
+          )
+          return
+        }
         if (data.error === 'limit_reached') {
           toast(
             (t) => (
@@ -896,7 +913,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
               </div>
               {/* Timer bar */}
               <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mb-4">
-                <div className={`h-full rounded-full transition-all duration-1000 ${elapsed < 30 ? 'bg-amber-400' : 'bg-teal-400'}`}
+                <div className={`h-full rounded-full transition-all duration-1000 ${elapsed < 45 ? 'bg-amber-400' : 'bg-teal-400'}`}
                   style={{ width: `${Math.min(100, (elapsed / 60) * 100)}%` }} />
               </div>
             </>
@@ -921,16 +938,16 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             <div className="flex items-center gap-4">
               <div className="flex-1 flex items-center gap-2 text-white/70 text-sm">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                {elapsed < 30 ? `${30 - elapsed}s until you can stop` : 'Walk slowly around the car…'}
+                {elapsed < 45 ? `${45 - elapsed}s — keep walking around` : 'All 4 sides done — tap Stop when ready'}
               </div>
-              <button onClick={stopRecording} disabled={elapsed < 30}
+              <button onClick={stopRecording} disabled={elapsed < 45}
                 className="px-6 py-3 bg-white/15 backdrop-blur text-white rounded-xl text-sm font-bold hover:bg-white/25 disabled:opacity-40 transition-colors flex items-center gap-2 border border-white/20">
                 <Square className="w-4 h-4 fill-white" />
-                {elapsed < 30 ? `${30 - elapsed}s` : 'Stop'}
+                {elapsed < 45 ? `${45 - elapsed}s` : 'Stop'}
               </button>
             </div>
           )}
-          <p className="text-center text-white/40 text-xs mt-3">Auto-stops at 90 seconds · Minimum 30 seconds required</p>
+          <p className="text-center text-white/40 text-xs mt-3">Minimum 45 seconds (covers all 4 sides) · Auto-stops at 90 seconds</p>
         </div>
       </div>
     )
@@ -1011,7 +1028,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             ))}
           </div>
           <div className="bg-slate-50 rounded-xl p-4 mb-6 text-sm text-slate-600">
-            <strong className="text-slate-800">How to record:</strong> Stand at the front, tap Record, then walk slowly clockwise around the entire car. Return to the front. Aim for 45–60 seconds.
+            <strong className="text-slate-800">How to record:</strong> Stand at the front, tap Record, then walk slowly clockwise — Front → Right → Rear → Left → back to Front. You need <strong>all 4 sides</strong>. Minimum 45 seconds, ideal 60 seconds.
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => { setMode('select'); streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraStream(null) }}

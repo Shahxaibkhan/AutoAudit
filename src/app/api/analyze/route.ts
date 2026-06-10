@@ -21,6 +21,15 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
+  // Block demo accounts from running real AI analysis
+  const isDemo = user.email.startsWith('demo-') && user.email.includes('@autoauditai.com')
+  if (isDemo) {
+    return NextResponse.json({
+      error: 'demo_account',
+      message: 'Demo accounts cannot run new AI analysis. Please sign up for a free account to inspect your own vehicles.',
+    }, { status: 403 })
+  }
+
   const check = canAnalyze(user)
   if (!check.allowed) {
     return NextResponse.json({ error: 'limit_reached', reason: check.reason }, { status: 402 })
