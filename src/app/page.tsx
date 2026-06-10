@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   ScanLine, Shield, BarChart3, CheckCircle, ArrowRight, Zap, Star,
@@ -25,6 +26,103 @@ function SectionLabel({ children, dark = false }: { children: React.ReactNode; d
 }
 
 /* ─── page ─────────────────────────────────────────────────────────────── */
+
+/* ─── Pricing section with B2C / B2B toggle ──────────────────────── */
+function PricingSection() {
+  const [tab, setTab] = useState<'b2c' | 'b2b'>('b2c')
+
+  const b2cPlans = [
+    { name: 'Quick Check', price: '$0.99', period: '/inspection', badge: null, desc: 'Fast AI screening — good for a quick look.', features: ['AI damage detection', 'Condition grade A–F', 'Evidence photos', 'Shareable report'], cta: 'Get started', highlight: false },
+    { name: 'Standard', price: '$1.99', period: '/inspection', badge: 'Most popular', desc: 'Full report for buyers, sellers, and personal checks.', features: ['Everything in Quick', 'Panel-by-panel breakdown', 'Repaint & rim detection', 'PDF download'], cta: 'Get started', highlight: true },
+    { name: 'Pro', price: '$3.99', period: '/inspection', badge: null, desc: 'Advanced analysis including hidden damage indicators.', features: ['Everything in Standard', 'Panel misalignment detection', 'Headlight clarity check', 'Priority AI processing'], cta: 'Get started', highlight: false },
+    { name: 'With Signatures', price: '$4.99', period: '/inspection', badge: null, desc: 'Both parties sign. SHA-256 tamper-proof seal.', features: ['Everything in Pro', 'Owner reviews findings', 'Customer signs agreement', 'SHA-256 verification hash'], cta: 'Get started', highlight: false },
+  ]
+
+  const b2bPlans = [
+    { name: 'Starter', price: 'From $19', period: '/mo', badge: null, desc: 'Perfect for small fleets and solo operators.', features: ['50 inspection credits', 'AI damage detection', 'PDF reports', 'Email support'], cta: 'Start free trial', highlight: false },
+    { name: 'Growth', price: 'From $49', period: '/mo', badge: 'Most popular', desc: 'For growing rental or fleet businesses.', features: ['200 inspection credits', 'Before/after comparison', 'Multi-vehicle dashboard', 'Priority support'], cta: 'Start free trial', highlight: true },
+    { name: 'Pro', price: 'From $99', period: '/mo', badge: null, desc: 'High-volume operations and multi-branch businesses.', features: ['600 inspection credits', 'All Growth features', 'API access', 'Dedicated onboarding'], cta: 'Start free trial', highlight: false },
+    { name: 'Enterprise', price: 'Custom', period: '', badge: null, desc: 'Large fleets, insurers, and dealership groups.', features: ['Unlimited inspections', 'White-label option', 'Custom integrations', 'SLA + dedicated support'], cta: 'Contact sales', highlight: false },
+  ]
+
+  const plans = tab === 'b2c' ? b2cPlans : b2bPlans
+
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="text-center mb-10">
+        <SectionLabel dark>Pricing</SectionLabel>
+        <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-6">
+          Pay only when<br className="hidden sm:block" /> you inspect
+        </h2>
+
+        {/* Toggle */}
+        <div className="inline-flex bg-white/6 border border-white/10 rounded-2xl p-1.5 gap-1">
+          <button onClick={() => setTab('b2c')}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'b2c' ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/25' : 'text-slate-400 hover:text-white'}`}>
+            👤 Individual
+          </button>
+          <button onClick={() => setTab('b2b')}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'b2b' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' : 'text-slate-400 hover:text-white'}`}>
+            🏢 Business
+          </button>
+        </div>
+
+        <p className="mt-4 text-slate-400 text-base max-w-xl mx-auto">
+          {tab === 'b2c'
+            ? 'Pay per inspection. No subscription needed. Perfect for buyers, sellers, and personal checks.'
+            : 'Monthly credits for your fleet or business. No per-user fees. Cancel anytime.'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {plans.map(plan => (
+          <div key={plan.name}
+            className={`relative rounded-2xl p-6 border transition-all ${
+              plan.highlight
+                ? tab === 'b2c' ? 'bg-teal-500 border-teal-400 shadow-2xl shadow-teal-500/25' : 'bg-indigo-600 border-indigo-400 shadow-2xl shadow-indigo-500/25'
+                : 'bg-white/4 border-white/8 hover:bg-white/6 hover:border-white/15'
+            }`}>
+            {plan.badge && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 text-xs font-black px-3 py-1 rounded-full whitespace-nowrap">
+                {plan.badge}
+              </div>
+            )}
+            <div className="mb-5">
+              <div className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-white/70' : 'text-slate-500'}`}>{plan.name}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-black text-white">{plan.price}</span>
+                <span className={`text-sm ${plan.highlight ? 'text-white/60' : 'text-slate-500'}`}>{plan.period}</span>
+              </div>
+              <p className={`text-xs mt-2 leading-snug ${plan.highlight ? 'text-white/70' : 'text-slate-500'}`}>{plan.desc}</p>
+            </div>
+            <ul className="space-y-2.5 mb-6">
+              {plan.features.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlight ? 'text-white/60' : 'text-teal-500'}`} />
+                  <span className={plan.highlight ? 'text-white/80' : 'text-slate-400'}>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Link href={plan.name === 'Enterprise' ? '/login' : '/register'}
+              className={`block text-center py-2.5 rounded-xl text-sm font-bold transition-all ${
+                plan.highlight
+                  ? 'bg-slate-950 text-white hover:bg-slate-900'
+                  : tab === 'b2c' ? 'bg-teal-500 text-slate-950 hover:bg-teal-400' : 'bg-indigo-500 text-white hover:bg-indigo-400'
+              }`}>
+              {plan.cta}
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-center text-slate-600 text-sm">
+        {tab === 'b2c'
+          ? '3 free inspections to start · No credit card required · Pay only when you need it'
+          : 'All plans include a 14-day free trial · 3 free inspections · No credit card required'}
+      </p>
+    </div>
+  )
+}
 
 export default function LandingPage() {
   const { t } = useI18n()
@@ -547,111 +645,7 @@ export default function LandingPage() {
 
       {/* ── PRICING ─────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-20 sm:py-28 px-4 sm:px-6 bg-slate-950 dot-grid-dark">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <SectionLabel dark>Pricing</SectionLabel>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-              Pay only when<br className="hidden sm:block" /> you inspect
-            </h2>
-            <p className="mt-5 text-slate-400 text-lg max-w-xl mx-auto">
-              Buy a bundle of inspection credits. Use them across any vehicle, any team member, any time. No per-user fees.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {[
-              {
-                name: 'Starter',
-                price: 'From $19',
-                period: '/mo',
-                inspections: '50 inspections/mo',
-                desc: 'Perfect for small fleets and solo operators.',
-                features: ['50 inspection credits', 'AI damage detection', 'PDF reports', 'Email support'],
-                cta: 'Start free trial',
-                highlight: false,
-              },
-              {
-                name: 'Growth',
-                price: 'From $49',
-                period: '/mo',
-                inspections: '200 inspections/mo',
-                desc: 'For growing rental or fleet businesses.',
-                features: ['200 inspection credits', 'Before/after comparison', 'Multi-vehicle dashboard', 'Priority support'],
-                cta: 'Start free trial',
-                highlight: true,
-              },
-              {
-                name: 'Pro',
-                price: 'From $99',
-                period: '/mo',
-                inspections: '600 inspections/mo',
-                desc: 'High-volume operations and multi-branch businesses.',
-                features: ['600 inspection credits', 'All Growth features', 'API access', 'Dedicated onboarding'],
-                cta: 'Start free trial',
-                highlight: false,
-              },
-              {
-                name: 'Enterprise',
-                price: 'Custom',
-                period: '',
-                inspections: 'Unlimited',
-                desc: 'Large fleets, insurers, and dealership groups.',
-                features: ['Unlimited inspections', 'White-label option', 'Custom integrations', 'SLA + dedicated support'],
-                cta: 'Contact sales',
-                highlight: false,
-              },
-            ].map(plan => (
-              <div key={plan.name}
-                className={`relative rounded-2xl p-6 border transition-all ${
-                  plan.highlight
-                    ? 'bg-teal-500 border-teal-400 shadow-2xl shadow-teal-500/25'
-                    : 'bg-white/4 border-white/8 hover:bg-white/6 hover:border-white/15'
-                }`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 text-xs font-black px-3 py-1 rounded-full">
-                    MOST POPULAR
-                  </div>
-                )}
-                <div className="mb-5">
-                  <div className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-teal-100' : 'text-slate-500'}`}>
-                    {plan.name}
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-white'}`}>{plan.price}</span>
-                    <span className={`text-sm ${plan.highlight ? 'text-teal-200' : 'text-slate-500'}`}>{plan.period}</span>
-                  </div>
-                  <div className={`text-sm font-semibold mt-1 ${plan.highlight ? 'text-teal-100' : 'text-teal-400'}`}>
-                    {plan.inspections}
-                  </div>
-                  <p className={`text-xs mt-2 leading-snug ${plan.highlight ? 'text-teal-100' : 'text-slate-500'}`}>{plan.desc}</p>
-                </div>
-
-                <ul className="space-y-2.5 mb-6">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlight ? 'text-teal-200' : 'text-teal-500'}`} />
-                      <span className={plan.highlight ? 'text-teal-50' : 'text-slate-400'}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={plan.name === 'Enterprise' ? '/login' : '/register'}
-                  className={`block text-center py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    plan.highlight
-                      ? 'bg-slate-950 text-teal-400 hover:bg-slate-900'
-                      : 'bg-teal-500 text-slate-950 hover:bg-teal-400'
-                  }`}>
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-slate-600 text-sm">
-            All plans include a 14-day free trial · 3 free inspections · No credit card required
-          </p>
-        </div>
+        <PricingSection />
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}

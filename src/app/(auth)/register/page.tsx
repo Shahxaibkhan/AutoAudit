@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ScanLine, Loader2, ArrowRight, Shield, Zap, BarChart3, Eye, EyeOff } from 'lucide-react'
+import { ScanLine, Loader2, ArrowRight, ArrowLeft, Shield, Zap, BarChart3, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const USER_TYPES = [
@@ -114,6 +114,10 @@ export default function RegisterPage() {
               <ScanLine className="w-4 h-4 text-white" />
             </div>
             <span className="font-black text-slate-900">AutoAuditAI</span>
+          </Link>
+
+          <Link href="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm mb-6 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to home
           </Link>
 
           <div className="mb-7">
