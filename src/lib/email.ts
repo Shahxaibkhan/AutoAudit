@@ -1,7 +1,8 @@
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM = 'AutoAuditAI <onboarding@resend.dev>'
+// After domain verification: change to 'AutoAuditAI <noreply@autoauditai.com>'
+const FROM = process.env.RESEND_FROM_EMAIL || 'AutoAuditAI <onboarding@resend.dev>'
 const BASE_URL = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
 
 function baseTemplate(title: string, body: string): string {

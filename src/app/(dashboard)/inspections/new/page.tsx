@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inspectionTypeLabel, isSingleInspection } from '@/lib/utils'
+import { useSession } from 'next-auth/react'
 
 /* ── Type groups ─────────────────────────────────────────────────────── */
 const SINGLE_TYPES = [
@@ -46,9 +47,16 @@ function RadioCard({ type, selected, onChange }: { type: string; selected: boole
   )
 }
 
+// Industries that are purely personal — hide B2B types entirely
+const CONSUMER_INDUSTRIES = ['buyer', 'seller']
+
 function NewInspectionForm() {
   const router = useRouter()
   const params = useSearchParams()
+  const { data: session } = useSession()
+  const userIndustry = (session?.user as any)?.industry as string | null
+  const isConsumer = userIndustry ? CONSUMER_INDUSTRIES.includes(userIndustry) : false
+
   const [loading, setLoading] = useState(false)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [preInspections, setPreInspections] = useState<Inspection[]>([])
@@ -176,8 +184,8 @@ function NewInspectionForm() {
                 </div>
               </div>
 
-              {/* Group 2: Before & After — collapsible */}
-              <div>
+              {/* Group 2: Before & After — hidden for consumers, collapsible for businesses */}
+              {!isConsumer && <div>
                 <button
                   type="button"
                   onClick={() => setShowB2B(s => !s)}
@@ -204,10 +212,9 @@ function NewInspectionForm() {
                     </button>
                   </p>
                 )}
-              </div>
+              </div>}
             </div>
 
-            {/* Link to previous inspection (B2B only) */}
             {linkedPreType && (
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">

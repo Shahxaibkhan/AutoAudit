@@ -73,6 +73,7 @@ export const authOptions: NextAuthOptions = {
           creditsUsed: user.creditsUsed,
           creditsTotal: user.creditsTotal,
           trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+          industry: user.industry ?? null,
         }
       },
     }),
@@ -85,6 +86,7 @@ export const authOptions: NextAuthOptions = {
         token.creditsUsed = (user as any).creditsUsed
         token.creditsTotal = (user as any).creditsTotal
         token.trialEndsAt = (user as any).trialEndsAt
+        token.industry = (user as any).industry ?? null
       }
       if (trigger === 'update') {
         const fresh = await prisma.user.findUnique({ where: { id: token.id as string } })
@@ -105,6 +107,7 @@ export const authOptions: NextAuthOptions = {
         u.creditsUsed = token.creditsUsed
         u.creditsTotal = token.creditsTotal
         u.trialEndsAt = token.trialEndsAt
+        u.industry = token.industry
       }
       return session
     },

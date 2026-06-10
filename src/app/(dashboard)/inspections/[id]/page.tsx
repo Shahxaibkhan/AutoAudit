@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Camera, FileText, Car, AlertTriangle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Camera, FileText, Car, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react'
 import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
 
@@ -47,11 +47,18 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {!hasReport && (
+          {!hasReport && inspection.images.length === 0 && (
             <Link href={`/inspections/${params.id}/capture`}
               className="flex items-center gap-1.5 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20">
               <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">{inspection.images.length > 0 ? 'Continue' : 'Start'}</span> Capture
+              <span className="hidden xs:inline">Start</span> Capture
+            </Link>
+          )}
+          {!hasReport && inspection.images.length > 0 && (
+            <Link href={`/inspections/${params.id}/capture`}
+              className="flex items-center gap-1.5 sm:gap-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Analyze with AI
             </Link>
           )}
           {isPendingReview && (
