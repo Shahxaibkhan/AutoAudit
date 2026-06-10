@@ -5,17 +5,23 @@ import Link from 'next/link'
 import { ScanLine, Loader2, ArrowRight, Shield, Zap, BarChart3, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const CONSUMER_OPTIONS = [
-  { value: 'buyer',  label: 'Buying a used car',   desc: 'Pre-purchase inspection before I pay', emoji: '🛒' },
-  { value: 'seller', label: 'Selling my car',       desc: 'Prove condition to buyers',           emoji: '🏷️' },
-  { value: 'my_car', label: 'Checking my own car',  desc: 'Routine health check',                emoji: '🚗' },
-]
-
-const BUSINESS_OPTIONS = [
-  { value: 'rental', label: 'Car Rental Business', desc: 'Pre/post-rental documentation',   emoji: '🔑' },
-  { value: 'dealer', label: 'Car Dealership',      desc: 'Trade-in & pre-sale reports',     emoji: '🏢' },
-  { value: 'fleet',  label: 'Fleet Management',    desc: 'Shift-start/end accountability',  emoji: '🚛' },
-  { value: 'other',  label: 'Other business',      desc: 'Insurance, repair, leasing etc.', emoji: '📋' },
+const USER_TYPES = [
+  {
+    value: 'individual',
+    label: 'I\'m an individual',
+    desc: 'Buying, selling, or checking my own car',
+    emoji: '👤',
+    examples: 'Buyer · Seller · Personal car check',
+    accent: 'teal',
+  },
+  {
+    value: 'business',
+    label: 'I run a business',
+    desc: 'Rental fleet, dealership, or fleet management',
+    emoji: '🏢',
+    examples: 'Car rental · Dealership · Fleet manager',
+    accent: 'indigo',
+  },
 ]
 
 export default function RegisterPage() {
@@ -139,60 +145,40 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">How will you use AutoAuditAI? *</label>
-              {/* Hidden required input for form validation */}
+              <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">I am signing up as *</label>
               <input type="text" required value={form.industry} onChange={() => {}} className="sr-only" tabIndex={-1} aria-hidden />
 
-              {/* Individual / Consumer */}
-              <div className="mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">For individuals</p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {CONSUMER_OPTIONS.map(opt => (
+              <div className="grid grid-cols-2 gap-3">
+                {USER_TYPES.map(opt => {
+                  const selected = form.industry === opt.value
+                  const isBiz = opt.value === 'business'
+                  return (
                     <button key={opt.value} type="button"
                       onClick={() => setForm(p => ({ ...p, industry: opt.value }))}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all ${
-                        form.industry === opt.value
-                          ? 'border-teal-500 bg-teal-50'
-                          : 'border-slate-100 hover:border-slate-200 bg-white'
+                      className={`relative flex flex-col items-center text-center gap-2 px-4 py-5 rounded-2xl border-2 transition-all ${
+                        selected
+                          ? isBiz ? 'border-indigo-500 bg-indigo-50' : 'border-teal-500 bg-teal-50'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}>
-                      <span className="text-lg">{opt.emoji}</span>
-                      <div className="min-w-0">
-                        <div className={`text-sm font-semibold ${form.industry === opt.value ? 'text-teal-800' : 'text-slate-700'}`}>{opt.label}</div>
-                        <div className="text-xs text-slate-400">{opt.desc}</div>
+                      {selected && (
+                        <div className={`absolute top-2.5 right-2.5 w-4 h-4 rounded-full flex items-center justify-center ${isBiz ? 'bg-indigo-500' : 'bg-teal-500'}`}>
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      )}
+                      <span className="text-3xl">{opt.emoji}</span>
+                      <div>
+                        <div className={`text-sm font-bold ${selected ? (isBiz ? 'text-indigo-800' : 'text-teal-800') : 'text-slate-800'}`}>{opt.label}</div>
+                        <div className="text-xs text-slate-400 mt-0.5 leading-snug">{opt.examples}</div>
                       </div>
-                      {form.industry === opt.value && <div className="ml-auto w-4 h-4 rounded-full bg-teal-500 flex items-center justify-center shrink-0"><div className="w-2 h-2 rounded-full bg-white" /></div>}
                     </button>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
 
-              {/* Business */}
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">For businesses</p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {BUSINESS_OPTIONS.map(opt => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm(p => ({ ...p, industry: opt.value }))}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all ${
-                        form.industry === opt.value
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-slate-100 hover:border-slate-200 bg-white'
-                      }`}>
-                      <span className="text-lg">{opt.emoji}</span>
-                      <div className="min-w-0">
-                        <div className={`text-sm font-semibold ${form.industry === opt.value ? 'text-indigo-800' : 'text-slate-700'}`}>{opt.label}</div>
-                        <div className="text-xs text-slate-400">{opt.desc}</div>
-                      </div>
-                      {form.industry === opt.value && <div className="ml-auto w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center shrink-0"><div className="w-2 h-2 rounded-full bg-white" /></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Keep the hidden select for backward compat — not displayed */}
+              {/* Hidden select — keeps value in sync */}
               <select value={form.industry} onChange={e => setForm(p => ({ ...p, industry: e.target.value }))} className="sr-only" tabIndex={-1}>
                 <option value="">Select…</option>
-                {[...CONSUMER_OPTIONS, ...BUSINESS_OPTIONS].map(i => (
+                {USER_TYPES.map(i => (
                   <option key={i.value} value={i.value}>{i.label}</option>
                 ))}
               </select>

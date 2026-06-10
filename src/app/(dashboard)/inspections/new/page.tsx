@@ -47,8 +47,8 @@ function RadioCard({ type, selected, onChange }: { type: string; selected: boole
   )
 }
 
-// Industries that are purely personal — hide B2B types entirely
-const CONSUMER_INDUSTRIES = ['buyer', 'seller', 'my_car']
+// Individual accounts hide B2B comparison types
+const CONSUMER_INDUSTRIES = ['individual', 'buyer', 'seller', 'my_car']
 
 function NewInspectionForm() {
   const router = useRouter()
