@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Camera, Upload, CheckCircle, Loader2, X, Sparkles,
-  Video, Sun, Focus, AlertTriangle, RotateCcw, Play, Square,
+  Video, Sun, Focus, AlertTriangle, RotateCcw,
   ChevronRight, ImageIcon, Film, Smartphone, Car, ArrowUp,
   ArrowRight, ArrowDown, Navigation
 } from 'lucide-react'
@@ -889,8 +889,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        {/* Bottom HUD */}
-        <div className="relative z-10 pb-safe pb-6 px-4 bg-gradient-to-t from-black/80 to-transparent pt-16">
+        {/* Bottom HUD (informational — the shutter floats separately) */}
+        <div className={`relative z-10 pb-safe ${isPortrait ? 'pb-32' : 'pb-6'} px-4 bg-gradient-to-t from-black/80 to-transparent pt-16`}>
           {recording && step && (
             <>
               {/* Walkaround dots */}
@@ -919,36 +919,45 @@ export default function CapturePage({ params }: { params: { id: string } }) {
             </>
           )}
 
-          {/* Controls */}
+          {/* Status line (the action lives in the floating shutter below) */}
           {!recording ? (
-            <>
-              {stillPortrait && (
-                <div className="flex items-center gap-2 bg-amber-500/90 text-white text-sm font-semibold px-4 py-3 rounded-xl mb-3 text-center justify-center">
-                  <Smartphone className="w-4 h-4 shrink-0" />
-                  Rotate your phone to landscape first
-                </div>
-              )}
-              <button onClick={startRecording} disabled={stillPortrait}
-                className="w-full py-4 bg-red-500 text-white rounded-2xl text-base font-bold hover:bg-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
-                <Play className="w-5 h-5" />
-                {stillPortrait ? 'Rotate to landscape to start' : 'Start Recording'}
-              </button>
-            </>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="flex-1 flex items-center gap-2 text-white/70 text-sm">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                {elapsed < 45 ? `${45 - elapsed}s — keep walking around` : 'All 4 sides done — tap Stop when ready'}
+            stillPortrait ? (
+              <div className="flex items-center gap-2 bg-amber-500/90 text-white text-sm font-semibold px-4 py-3 rounded-xl text-center justify-center max-w-md mx-auto">
+                <Smartphone className="w-4 h-4 shrink-0" />
+                Rotate your phone to landscape to start
               </div>
-              <button onClick={stopRecording} disabled={elapsed < 45}
-                className="px-6 py-3 bg-white/15 backdrop-blur text-white rounded-xl text-sm font-bold hover:bg-white/25 disabled:opacity-40 transition-colors flex items-center gap-2 border border-white/20">
-                <Square className="w-4 h-4 fill-white" />
-                {elapsed < 45 ? `${45 - elapsed}s` : 'Stop'}
-              </button>
+            ) : (
+              <p className="text-center text-white/70 text-sm">Tap the red button to start recording</p>
+            )
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              {elapsed < 45 ? `${45 - elapsed}s — keep walking around the car` : 'All 4 sides covered — tap the button to stop'}
             </div>
           )}
           <p className="text-center text-white/40 text-xs mt-3">Minimum 45 seconds (covers all 4 sides) · Auto-stops at 90 seconds</p>
         </div>
+
+        {/* Floating circular shutter — bottom-center (portrait) / right-center (landscape) */}
+        <button
+          onClick={recording ? stopRecording : startRecording}
+          disabled={recording ? elapsed < 45 : stillPortrait}
+          aria-label={recording ? 'Stop recording' : 'Start recording'}
+          className={`absolute z-20 flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+            isPortrait
+              ? 'left-1/2 -translate-x-1/2 bottom-8'
+              : 'right-6 top-1/2 -translate-y-1/2'
+          }`}
+        >
+          {recording && elapsed < 45 && (
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-white text-xs font-bold whitespace-nowrap">{45 - elapsed}s</span>
+          )}
+          <span className="w-16 h-16 rounded-full border-4 border-white/85 bg-black/20 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform">
+            {recording
+              ? <span className="w-6 h-6 bg-red-500 rounded-md" />
+              : <span className="w-12 h-12 bg-red-500 rounded-full" />}
+          </span>
+        </button>
       </div>
     )
   }

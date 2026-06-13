@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { ScanLine, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ScanLine, ChevronLeft, ChevronRight, Check, Lock, Shield } from 'lucide-react'
 
 /* ── Each slide definition ──────────────────────────────────────── */
 interface Slide {
@@ -15,69 +15,102 @@ interface Slide {
   bullets?: string[]
   quote?: { text: string; author: string }
   wide?: boolean         // headline takes full width (no right column)
+  mock?: 'capture' | 'report' | 'sign'                 // in-app HTML/CSS mockup (right column)
+  funnel?: { value: string; label: string }[]          // TAM / SAM / SOM funnel (widest first)
+  table?: {                                            // competition comparison matrix
+    headers: string[]
+    rows: string[][]
+    highlightRow?: number
+  }
 }
 
 const SLIDES: Slide[] = [
+  /* 1 ── Title / hook ── */
   {
     photo: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 40%',
     overlay: 'linear-gradient(135deg, rgba(4,12,24,0.88) 0%, rgba(4,12,24,0.60) 60%, rgba(4,12,24,0.85) 100%)',
     label: 'LCE LUMS Cohort-4 · June 2026',
     headline: 'The trust layer for every car deal.',
-    sub: 'AI-powered vehicle inspection in 60 seconds — for buyers, sellers, rental businesses, and dealers. Both parties sign. Reports are tamper-proof forever.',
+    sub: 'AI inspects any vehicle in 60 seconds — from a phone. Both parties sign. The report is sealed with a SHA-256 hash, tamper-proof forever.',
     accent: 'teal',
     stats: [
       { value: '60s', label: 'Inspection time' },
       { value: 'A–F', label: 'Condition grade' },
       { value: 'SHA-256', label: 'Tamper-proof' },
-      { value: '8+', label: 'Damage types' },
+      { value: '$1–5', label: '~PKR 300–1,400' },
     ],
   },
+
+  /* 2 ── Problem ── */
   {
     photo: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=2000&q=80',
     overlay: 'linear-gradient(135deg, rgba(120,0,0,0.75) 0%, rgba(4,12,24,0.80) 100%)',
     label: 'The Problem',
-    headline: 'Every car transaction starts with the same fear.',
-    sub: 'Manual inspection costs $50–150 and takes 2 days. Only available in major cities. Paper reports are easily faked.',
+    headline: 'Every used-car deal starts with the same fear: "What aren\'t they telling me?"',
+    sub: 'A trusted inspection costs $50–150 (PKR 14k–42k) and takes 2 days. It only exists in a few big cities. Paper reports are trivially faked — and when something goes wrong, both sides lose.',
     accent: 'red',
     stats: [
-      { value: '$500+', label: 'Lost per dispute' },
-      { value: '2 days', label: 'Manual inspection' },
-      { value: '3 cities', label: 'Only available in' },
-      { value: '0 proof', label: 'With paper reports' },
+      { value: '$500+', label: 'Lost per dispute (~PKR 140k)' },
+      { value: '2 days', label: 'For a manual inspection' },
+      { value: '3 cities', label: 'Where it\'s even available' },
+      { value: '0 proof', label: 'Behind a paper report' },
     ],
   },
+
+  /* 3 ── Solution / product ── */
   {
     photo: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 30%',
     overlay: 'linear-gradient(to right, rgba(4,12,24,0.92) 40%, rgba(4,12,24,0.50) 100%)',
-    label: 'The Product',
-    headline: 'AutoAuditAI inspects any vehicle in 60 seconds.',
-    sub: 'Phone-based. AI-powered. 10× cheaper than any alternative. Works anywhere.',
+    label: 'The Solution',
+    headline: 'AutoAuditAI inspects any car in 60 seconds — from a phone.',
+    sub: 'AI-powered. 10× cheaper. Works anywhere. Ends with a signed, tamper-proof report instead of a piece of paper.',
     accent: 'teal',
     stats: [
       { value: '60s', label: 'vs 2 days manual' },
       { value: '$1–5', label: 'vs $50–150 manual' },
       { value: 'Anywhere', label: 'vs 3 cities only' },
-      { value: 'Signed PDF', label: 'vs paper receipt' },
+      { value: 'Signed', label: 'vs paper receipt' },
     ],
   },
+
+  /* 4 ── How it works (capture mockup) ── */
   {
     photo: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 60%',
-    overlay: 'linear-gradient(to right, rgba(4,12,24,0.93) 45%, rgba(4,12,24,0.55) 100%)',
-    label: 'B2C Flow — Buyers & Sellers',
-    headline: 'Know exactly what you\'re buying. Prove exactly what you\'re selling.',
-    accent: 'sky',
+    overlay: 'linear-gradient(to right, rgba(4,12,24,0.94) 45%, rgba(4,12,24,0.55) 100%)',
+    label: 'How It Works',
+    headline: 'Point. Record. Done.',
+    sub: 'A guided 60-second walkaround. On-device checks reject blurry, dark, or shaky frames before the AI ever sees them.',
+    accent: 'teal',
+    mock: 'capture',
     bullets: [
-      '🛒  Buyer opens app — selects "Buying a used car"',
-      '🎬  Records 60s video walkaround of the vehicle',
-      '🤖  AI analyzes: repaint, dents, rim damage, headlights',
-      '📊  Grade A–F report with evidence photos generated',
-      '📱  Buyer shares report — seller signs to confirm',
-      '🔐  SHA-256 hash seals the agreement permanently',
+      'Open the app and pick what you\'re doing — buying, selling, or renting',
+      'Follow the on-screen guide for a 60s walkaround',
+      'AI analyses the sharpest frames automatically',
     ],
   },
+
+  /* 5 ── B2C flow ── */
+  {
+    photo: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=2000&q=80',
+    photoPos: 'center 30%',
+    overlay: 'linear-gradient(to right, rgba(4,12,24,0.93) 45%, rgba(4,12,24,0.55) 100%)',
+    label: 'B2C Flow — Buyers & Sellers',
+    headline: 'Know what you\'re buying. Prove what you\'re selling.',
+    accent: 'sky',
+    bullets: [
+      '🛒  Buyer selects "Buying a used car"',
+      '🎬  Records a 60s video walkaround',
+      '🤖  AI flags repaint, dents, rim damage, headlights',
+      '📊  Grade A–F report with evidence photos',
+      '📱  Buyer shares it — seller signs to confirm',
+      '🔐  SHA-256 hash seals the agreement',
+    ],
+  },
+
+  /* 6 ── B2B flow ── */
   {
     photo: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=2000&q=80',
     overlay: 'linear-gradient(to right, rgba(4,12,24,0.93) 45%, rgba(4,12,24,0.55) 100%)',
@@ -86,92 +119,118 @@ const SLIDES: Slide[] = [
     sub: 'The inspection loop that ends he-said-she-said forever.',
     accent: 'indigo',
     bullets: [
-      '🚗  Pre-rental: owner records car condition (60s)',
-      '✍️  Owner reviews AI findings — signs with timestamp',
-      '🔗  Unique link sent to renter — no signup needed',
-      '👤  Renter reviews findings on their phone — signs',
-      '🔐  Report locked with SHA-256 before keys hand over',
+      '🚗  Pre-rental: owner records the car (60s)',
+      '✍️  Owner reviews AI findings — signs with a timestamp',
+      '🔗  Unique link sent to the renter — no signup needed',
+      '👤  Renter reviews on their phone — signs',
+      '🔐  Report locked with SHA-256 before keys change hands',
       '📸  Post-rental: AI auto-compares → only NEW damage flagged',
     ],
   },
+
+  /* 7 ── Trust moat (sign mockup) ── */
   {
     photo: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 40%',
-    overlay: 'linear-gradient(135deg, rgba(4,40,24,0.82) 0%, rgba(4,12,24,0.75) 100%)',
+    overlay: 'linear-gradient(135deg, rgba(4,40,24,0.85) 0%, rgba(4,12,24,0.80) 100%)',
     label: 'The Trust Innovation',
-    headline: 'Dual signature + SHA-256 hash. Industry first.',
-    sub: 'Both parties review AI findings, make edits, and sign. The resulting hash is immutable — if any data changes after signing, the hash won\'t match.',
+    headline: 'Both parties sign. Then SHA-256 seals it.',
+    sub: 'Owner and customer each review the AI findings, make edits, and sign on their own phone. Change one character afterwards and the hash no longer matches.',
     accent: 'emerald',
-    stats: [
-      { value: '01', label: 'AI analyzes damage' },
-      { value: '02', label: 'Owner reviews + signs' },
-      { value: '03', label: 'Customer reviews + signs' },
-      { value: '04', label: 'SHA-256 locks report' },
+    mock: 'sign',
+    bullets: [
+      'AI analyses the damage',
+      'Owner reviews + signs',
+      'Customer reviews + signs',
+      'SHA-256 locks the report — forever',
     ],
-    quote: { text: 'Tamper-proof. Dispute-proof. Legally defensible.', author: 'Both parties signed — forever.' },
   },
+
+  /* 8 ── AI detection (report mockup) ── */
   {
     photo: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 50%',
-    overlay: 'linear-gradient(to right, rgba(4,12,24,0.90) 40%, rgba(4,12,24,0.60) 100%)',
-    label: 'AI Detection — Advanced',
-    headline: 'We detect what human inspectors miss.',
-    sub: 'Not just scratches and dents. Our AI finds hidden accident history.',
+    overlay: 'linear-gradient(to right, rgba(4,12,24,0.92) 42%, rgba(4,12,24,0.60) 100%)',
+    label: 'AI Detection',
+    headline: 'A second pair of eyes that never gets tired.',
+    sub: 'AI assists the inspection — flagging dents, scratches, and subtle signs of past repairs so people can decide with more confidence. It supports human judgement; it doesn\'t replace it.',
     accent: 'amber',
+    mock: 'report',
     bullets: [
-      '🎨  Repaint detection — color mismatch, overspray on rubber seals',
-      '📐  Panel misalignment — uneven gaps = previous accident repair',
-      '🔵  Rim curb rash — metal alloy damage (not tyre marks)',
-      '💡  Headlight fogging — yellowing, UV oxidation',
-      '🔩  Rust & corrosion — panel, chassis, trim',
-      '✅  Multi-frame consensus — confirmed in 2+ frames only',
+      '🎨  Flags possible repaint — colour mismatch & overspray',
+      '📐  Highlights panel-gap differences worth a closer look',
+      '🔵  Spots likely rim curb rash on alloys',
+      '💡  Notes headlight fogging & UV oxidation',
+      '✅  Multi-frame consensus — flagged only when seen in 2+ frames',
     ],
   },
+
+  /* 9 ── Why now ── */
   {
     photo: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 60%',
-    overlay: 'linear-gradient(135deg, rgba(4,12,40,0.85) 0%, rgba(4,12,24,0.70) 100%)',
+    overlay: 'linear-gradient(135deg, rgba(4,12,40,0.86) 0%, rgba(4,12,24,0.72) 100%)',
+    label: 'Why Now',
+    headline: 'Three curves just crossed.',
+    sub: 'What was impossible and expensive two years ago is now cents on a phone.',
+    accent: 'violet',
+    bullets: [
+      '🧠  AI vision cost collapsed ~100× — an inspection now costs cents',
+      '📱  Smartphone cameras are everywhere in emerging markets',
+      '🚗  Used-car volumes are booming post-inflation',
+      '🌐  Online car marketplaces desperately need a trust rail',
+    ],
+  },
+
+  /* 10 ── Market (funnel) ── */
+  {
+    photo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=2000&q=80',
+    photoPos: 'center 40%',
+    overlay: 'linear-gradient(to right, rgba(4,12,24,0.92) 42%, rgba(4,12,24,0.58) 100%)',
     label: 'Market Opportunity',
     headline: 'A massive, underserved market.',
-    sub: 'Starting in South & Southeast Asia — built to scale globally.',
+    sub: 'Starting in Pakistan — 700k+ used-car transactions every year — and built to scale across South & Southeast Asia and the GCC.',
     accent: 'violet',
-    stats: [
+    funnel: [
       { value: '$8B+', label: 'Global TAM' },
       { value: '$500M', label: 'SE Asia + GCC SAM' },
       { value: '$15M', label: '3-year SOM' },
-      { value: '700k+', label: 'Pakistan alone/year' },
     ],
   },
+
+  /* 11 ── Business model + pricing ── */
   {
     photo: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 40%',
     overlay: 'linear-gradient(to right, rgba(4,12,24,0.93) 40%, rgba(4,12,24,0.60) 100%)',
     label: 'Business Model',
-    headline: '97% gross margin. Two revenue streams.',
-    sub: 'Cost per inspection: ~$0.10. Average sale: $2–5.',
+    headline: 'Software margins. Two revenue engines.',
+    sub: 'Real cost per inspection today (Gemini MVP): ~$0.05 video, ~$0.02 photo (PKR 4–13). Even on the full Claude + Roboflow stack it stays under $0.20.',
     accent: 'teal',
     bullets: [
-      '🔍  B2C per-inspection — $0.99 quick scan → $4.99 with dual signature',
-      '🏢  B2B subscription — $19/mo (50 inspections) → $99/mo (600)',
-      '💼  Enterprise — Custom pricing, white-label, API access',
-      '📈  Unit economics: 97% margin at scale',
-      '🎯  Net revenue target: $5k by Q3 2026, $50k by Q4',
+      '🔍  B2C per-inspection — $0.99 quick scan (PKR 299) → $4.99 signed (PKR 1,399)',
+      '🏢  B2B subscription — $19/mo · 50 (PKR 5.3k) → $99/mo · 600 (PKR 27.5k)',
+      '💼  Enterprise — custom pricing, white-label, API access',
+      '📈  Gross margin: ~96–99% at scale (verified from live pipeline)',
+      '🎯  Net revenue: $5k by Q3 2026 → $50k by Q4',
     ],
   },
+
+  /* 12 ── Traction ── */
   {
     photo: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 50%',
     overlay: 'linear-gradient(135deg, rgba(4,24,12,0.85) 0%, rgba(4,12,24,0.75) 100%)',
     label: 'Traction — What\'s Built',
-    headline: 'From zero to full product — in weeks.',
+    headline: 'From zero to a full product — in weeks.',
     sub: 'Built solo. Deployed. Working today at autoauditai.com.',
     accent: 'emerald',
     bullets: [
-      '✅  Full product live — video + photo capture, AI pipeline',
+      '✅  Live product — video + photo capture, AI pipeline',
       '✅  Dual-signature with SHA-256 tamper-proof hash',
-      '✅  Repaint, rim damage, panel misalignment detection',
+      '✅  Repaint, rim & panel-misalignment detection',
       '✅  Before/after comparison engine (rental loop)',
-      '✅  Multi-language: English, Urdu, Bahasa Indonesia, Malay',
+      '✅  Multi-language: English, Urdu, Bahasa, Malay',
       '✅  Admin panel + billing + demo accounts',
     ],
     stats: [
@@ -181,51 +240,61 @@ const SLIDES: Slide[] = [
       { value: 'Free', label: 'Try it now' },
     ],
   },
+
+  /* 13 ── Competition (table) ── */
   {
     photo: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 30%',
-    overlay: 'linear-gradient(to right, rgba(40,4,4,0.82) 30%, rgba(4,12,24,0.75) 100%)',
+    overlay: 'linear-gradient(to right, rgba(40,4,4,0.82) 25%, rgba(4,12,24,0.82) 100%)',
     label: 'Competition',
     headline: 'Nobody offers dual-signature at this price.',
     sub: 'Competitors detect damage. We build legal-grade trust between two parties.',
     accent: 'red',
-    stats: [
-      { value: '2 days + $50', label: 'PakWheels Inspect' },
-      { value: '$100+ · B2B only', label: 'Tractable / Ravin' },
-      { value: '$10 · No AI', label: 'Workshop check' },
-      { value: '60s · $1–5 · Signed', label: '✦ AutoAuditAI' },
-    ],
-    quote: { text: 'Our moat: the only inspection where both parties cryptographically sign off.', author: 'No competitor offers this under $5.' },
+    wide: true,
+    table: {
+      headers: ['', 'Speed', 'Price', 'AI', 'Dual sign'],
+      rows: [
+        ['PakWheels Inspect', '2 days', '$50 · PKR 14k', 'No', 'No'],
+        ['Tractable / Ravin', 'Minutes', '$100+ · B2B only', 'Yes', 'No'],
+        ['Workshop check', '1 day', '$10 · PKR 2.8k', 'No', 'No'],
+        ['AutoAuditAI', '60 sec', '$1–5 · PKR 300–1,400', 'Yes', 'Yes'],
+      ],
+      highlightRow: 3,
+    },
   },
+
+  /* 14 ── Team & roadmap ── */
   {
     photo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 40%',
     overlay: 'linear-gradient(to right, rgba(4,12,24,0.93) 40%, rgba(4,12,24,0.55) 100%)',
     label: 'Team & Roadmap',
     headline: 'Solo founder. Shipped fast. Coachable.',
-    sub: 'Built AutoAuditAI from zero to full deployed product using AI-assisted development.',
+    sub: 'Built AutoAuditAI from zero to a deployed product using AI-assisted development.',
     accent: 'teal',
     bullets: [
       '👤  Shahzaib Khan — Founder & CEO',
-      '🚀  Full product shipped solo in weeks using Claude Code',
-      '🎯  Q3 2026: 10 pilot customers + AI accuracy benchmarks',
-      '📈  Q4 2026: 100+ customers + second market launch',
-      '🌍  2027: 1,000+ customers + Indonesia + Malaysia',
+      '🚀  Full product shipped solo in weeks',
+      '🎯  Q3 2026: 10 pilot customers + accuracy benchmarks',
+      '📈  Q4 2026: 100+ customers + 2nd market launch',
+      '🌍  2027: 1,000+ customers — Indonesia + Malaysia',
     ],
     stats: [
       { value: '$5k', label: 'Q3 revenue target' },
       { value: '10', label: 'Pilot customers' },
       { value: '3', label: 'Markets by 2027' },
-      { value: 'Series Seed', label: '2027 funding' },
+      { value: 'Seed', label: '2027 funding' },
     ],
   },
+
+  /* 15 ── Ask / vision ── */
   {
     photo: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=2000&q=80',
     photoPos: 'center 50%',
     overlay: 'linear-gradient(135deg, rgba(4,12,24,0.80) 0%, rgba(4,30,24,0.78) 50%, rgba(4,12,24,0.85) 100%)',
     label: 'Our Ask from LCE',
     headline: 'In 3 years, every car deal will be verified by AI.',
-    sub: 'Both parties. Signed. Sealed. Tamper-proof. We\'re building the trust infrastructure for the emerging market vehicle economy.',
+    sub: 'Both parties. Signed. Sealed. Tamper-proof. We\'re building the trust infrastructure for the emerging-market vehicle economy.',
     accent: 'teal',
     wide: true,
     stats: [
@@ -368,7 +437,9 @@ export default function PitchDeck() {
 /* ── Single slide renderer ──────────────────────────────────────── */
 function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boolean }) {
   const a = ACCENTS[s.accent] || ACCENTS.teal
-  const hasTwoCol = !s.wide && (s.stats || s.bullets || s.quote)
+  const hasRight = !!(s.mock || s.funnel || s.stats || s.bullets || s.quote)
+  const twoCol = !s.wide && hasRight
+  const leftSteps = s.mock && s.bullets ? s.bullets : null
 
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -390,25 +461,39 @@ function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boole
         style={{ background: a.glow, opacity: 0.06, filter: 'blur(80px)' }} />
 
       {/* Content area */}
-      <div className="absolute inset-0 flex flex-col justify-end px-10 sm:px-16 pb-20 pt-24">
+      <div className="absolute inset-0 flex flex-col justify-center px-10 sm:px-16 pb-24 pt-24">
         {/* Label pill */}
         <div className={`inline-flex items-center self-start ${a.bg} ${a.border} border text-xs font-bold px-3.5 py-1.5 rounded-full backdrop-blur-sm mb-5 ${a.text}`}>
           {s.label}
         </div>
 
-        {hasTwoCol ? (
+        {twoCol ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end">
-            {/* Left: headline */}
+            {/* Left: headline + sub (+ steps for mock slides) */}
             <div>
               <h1 className="text-4xl sm:text-5xl lg:text-[52px] font-black text-white leading-[1.05] tracking-tight mb-4">
                 {s.headline}
               </h1>
               {s.sub && <p className="text-slate-300/80 text-base sm:text-lg leading-relaxed max-w-lg">{s.sub}</p>}
+              {leftSteps && (
+                <div className="mt-5 space-y-2.5">
+                  {leftSteps.map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className={`shrink-0 w-7 h-7 rounded-full ${a.bg} ${a.border} border flex items-center justify-center text-xs font-black ${a.text}`}>{i + 1}</div>
+                      <span className="text-slate-200 text-sm sm:text-base leading-snug">{b}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Right: stats / bullets / quote */}
+            {/* Right: mockup / funnel / stats / bullets / quote */}
             <div>
-              {s.stats && (
+              {s.mock === 'capture' && <MockCapture a={a} />}
+              {s.mock === 'report'  && <MockReport a={a} />}
+              {s.mock === 'sign'    && <MockSign a={a} />}
+              {!s.mock && s.funnel && <Funnel a={a} items={s.funnel} />}
+              {!s.mock && !s.funnel && s.stats && (
                 <div className="grid grid-cols-2 gap-3">
                   {s.stats.map((st, i) => (
                     <div key={i} className={`${a.bg} ${a.border} border rounded-2xl p-4 backdrop-blur-md`}>
@@ -418,14 +503,14 @@ function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boole
                   ))}
                 </div>
               )}
-              {s.bullets && (
+              {!s.mock && !s.funnel && !s.stats && s.bullets && (
                 <div className={`${a.bg} ${a.border} border rounded-2xl p-5 backdrop-blur-md space-y-2.5`}>
                   {s.bullets.map((b, i) => (
                     <div key={i} className="text-slate-200 text-sm sm:text-base leading-snug">{b}</div>
                   ))}
                 </div>
               )}
-              {s.quote && (
+              {!s.mock && !s.funnel && !s.stats && !s.bullets && s.quote && (
                 <div className={`${a.bg} ${a.border} border rounded-2xl p-5 backdrop-blur-md`}>
                   <div className={`text-3xl font-black ${a.text} leading-none mb-3`}>&ldquo;</div>
                   <p className="text-white font-semibold text-base sm:text-lg leading-snug mb-3">{s.quote.text}</p>
@@ -436,12 +521,15 @@ function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boole
           </div>
         ) : (
           /* Wide / no right column */
-          <div className="max-w-4xl">
+          <div className="max-w-5xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight mb-5">
               {s.headline}
             </h1>
             {s.sub && <p className="text-slate-300/80 text-lg sm:text-xl leading-relaxed mb-8 max-w-3xl">{s.sub}</p>}
-            {s.stats && (
+
+            {s.table && <CompareTable a={a} table={s.table} />}
+
+            {!s.table && s.stats && (
               <div className="flex flex-wrap gap-3">
                 {s.stats.map((st, i) => (
                   <div key={i} className={`${a.bg} ${a.border} border rounded-2xl px-5 py-3 backdrop-blur-md`}>
@@ -452,7 +540,7 @@ function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boole
               </div>
             )}
             {/* CTA on last slide */}
-            {s.wide && (
+            {s.wide && !s.table && (
               <div className="flex gap-3 mt-8">
                 <a href="https://autoauditai.com" target="_blank" rel="noopener noreferrer"
                   className="bg-teal-500 hover:bg-teal-400 text-white font-bold px-7 py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-2xl shadow-teal-500/30 text-sm">
@@ -466,6 +554,168 @@ function SlideContent({ slide: s, isOut = false }: { slide: Slide; isOut?: boole
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ── Reusable accent type ───────────────────────────────────────── */
+type Accent = { text: string; border: string; bg: string; glow: string }
+
+/* ── HTML/CSS mockup: phone capture screen ──────────────────────── */
+function MockCapture({ a }: { a: Accent }) {
+  return (
+    <div className="relative mx-auto w-[230px] h-[460px] rounded-[2.4rem] border-[6px] border-white/15 bg-black overflow-hidden shadow-2xl"
+      style={{ boxShadow: `0 30px 80px -20px ${a.glow}55` }}>
+      {/* Camera scene */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-600 via-slate-700 to-slate-900" />
+      <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 w-44 h-20 rounded-[45%] bg-black/40 blur-md" />
+      {/* Car silhouette */}
+      <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2">
+        <div className="w-40 h-14 rounded-t-[2rem] rounded-b-lg bg-slate-500/80" />
+        <div className="w-44 h-8 -mt-1 -ml-2 rounded-xl bg-slate-600/80" />
+        <div className="flex justify-between px-3 -mt-3">
+          <div className="w-7 h-7 rounded-full bg-slate-900/80 border-2 border-slate-700" />
+          <div className="w-7 h-7 rounded-full bg-slate-900/80 border-2 border-slate-700" />
+        </div>
+      </div>
+      {/* REC pill */}
+      <div className="absolute top-3 right-3 flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full">
+        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> REC 12s
+      </div>
+      {/* Back chip */}
+      <div className="absolute top-3 left-3 text-white/80 text-[9px] font-semibold bg-black/40 px-2 py-1 rounded-full">‹ Back</div>
+      {/* Step hint */}
+      <div className="absolute bottom-24 inset-x-0 text-center">
+        <span className="text-white text-[10px] font-semibold bg-black/30 px-2.5 py-1 rounded-full">Walk to the right side →</span>
+      </div>
+      {/* Walkaround dots */}
+      <div className="absolute bottom-[68px] inset-x-0 flex items-center justify-center gap-1.5">
+        {[0, 1, 2, 3].map(i => (
+          <span key={i} className="flex items-center gap-1.5">
+            <span className={`rounded-full ${i === 1 ? 'w-2.5 h-2.5 bg-white' : i === 0 ? 'w-2 h-2 bg-teal-400' : 'w-2 h-2 bg-white/30'}`} />
+            {i < 3 && <span className={`h-px w-5 ${i === 0 ? 'bg-teal-400' : 'bg-white/20'}`} />}
+          </span>
+        ))}
+      </div>
+      {/* Shutter */}
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-4 border-white/85 flex items-center justify-center">
+        <div className="w-9 h-9 bg-red-500 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
+/* ── HTML/CSS mockup: graded report card ────────────────────────── */
+function MockReport({ a }: { a: Accent }) {
+  const rows = [
+    { sev: 'bg-red-500',    label: 'Repaint — front-left fender',  tag: 'Severe' },
+    { sev: 'bg-amber-500',  label: 'Panel gap — rear-right door',  tag: 'Moderate' },
+    { sev: 'bg-amber-500',  label: 'Rim curb rash — front-left',   tag: 'Moderate' },
+    { sev: 'bg-slate-400',  label: 'Headlight fogging — both',     tag: 'Minor' },
+  ]
+  return (
+    <div className="mx-auto w-full max-w-sm rounded-2xl bg-white/95 p-4 shadow-2xl"
+      style={{ boxShadow: `0 30px 80px -24px ${a.glow}55` }}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-12 h-12 rounded-full bg-amber-400 text-white font-black text-xl flex items-center justify-center shadow-inner">B</div>
+        <div className="min-w-0">
+          <div className="text-slate-900 font-bold text-sm">Toyota Corolla · 2019</div>
+          <div className="text-slate-500 text-xs">Condition grade · 4 findings</div>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center gap-2.5 bg-slate-50 rounded-lg px-2.5 py-2">
+            <span className={`w-2 h-2 rounded-full ${r.sev} shrink-0`} />
+            <span className="text-slate-700 text-xs font-medium flex-1 truncate">{r.label}</span>
+            <span className="text-slate-400 text-[10px] font-semibold">{r.tag}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+        <Lock className="w-3 h-3" /> SHA-256 · 9f3a7b…c7e1 · sealed
+      </div>
+    </div>
+  )
+}
+
+/* ── HTML/CSS mockup: dual-signature card ───────────────────────── */
+function MockSign({ a }: { a: Accent }) {
+  const signers = [
+    { role: 'Owner',    phone: '+92 ***  1234', time: '13 Jun · 14:02' },
+    { role: 'Customer', phone: '+92 ***  8842', time: '13 Jun · 14:09' },
+  ]
+  return (
+    <div className="mx-auto w-full max-w-sm space-y-3">
+      {signers.map((sg, i) => (
+        <div key={i} className="rounded-2xl bg-white/95 px-4 py-3 shadow-2xl flex items-center gap-3"
+          style={{ boxShadow: `0 24px 60px -28px ${a.glow}55` }}>
+          <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+            <Check className="w-5 h-5 text-white" strokeWidth={3} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-slate-900 font-bold text-sm">{sg.role} signed</div>
+            <div className="text-slate-500 text-xs font-mono">{sg.phone}</div>
+          </div>
+          <div className="text-slate-400 text-[10px] font-medium text-right">{sg.time}</div>
+        </div>
+      ))}
+      <div className={`rounded-2xl ${a.bg} ${a.border} border px-4 py-3 backdrop-blur-md flex items-center gap-3`}>
+        <Shield className={`w-5 h-5 ${a.text} shrink-0`} />
+        <div className="flex-1 min-w-0">
+          <div className="text-white font-semibold text-sm">Report locked</div>
+          <div className="text-slate-300/80 text-[10px] font-mono truncate">SHA-256 · 9f3a7b21…c7e1d480</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── TAM / SAM / SOM funnel ──────────────────────────────────────── */
+function Funnel({ a, items }: { a: Accent; items: { value: string; label: string }[] }) {
+  const widths = ['100%', '74%', '50%']
+  return (
+    <div className="space-y-3">
+      {items.map((it, i) => (
+        <div key={i} className="mx-auto" style={{ width: widths[i] || '40%' }}>
+          <div className={`${a.bg} ${a.border} border rounded-xl px-4 py-3 backdrop-blur-md flex items-center justify-center gap-2`}>
+            <span className={`text-2xl font-black ${a.text}`}>{it.value}</span>
+            <span className="text-slate-300 text-xs font-medium">{it.label}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ── Competition comparison table ───────────────────────────────── */
+function CompareTable({ a, table }: { a: Accent; table: NonNullable<Slide['table']> }) {
+  return (
+    <div className={`${a.border} border rounded-2xl overflow-hidden backdrop-blur-md bg-white/5 max-w-3xl`}>
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr>
+            {table.headers.map((h, i) => (
+              <th key={i} className="px-3 sm:px-4 py-3 text-slate-400 text-xs font-semibold uppercase tracking-wide">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((r, ri) => {
+            const hi = ri === table.highlightRow
+            return (
+              <tr key={ri} className={hi ? a.bg : ''}>
+                {r.map((c, ci) => (
+                  <td key={ci}
+                    className={`px-3 sm:px-4 py-3 text-sm border-t border-white/10 ${ci === 0 ? 'font-bold' : ''} ${hi ? `${a.text} font-semibold` : 'text-slate-200'}`}>
+                    {c === 'Yes' ? <span className="text-emerald-400 font-bold">✓ Yes</span> : c === 'No' ? <span className="text-slate-500">— No</span> : c}
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

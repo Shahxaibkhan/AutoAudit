@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Users, Zap, AlertTriangle, TrendingUp, Gift, Clock, ShieldCheck, RotateCcw, ChevronDown, Search, Ban, ExternalLink, XCircle } from 'lucide-react'
 import { PLANS, trialDaysLeft, creditsRemaining } from '@/lib/subscription'
+import { COST_PRESETS, grossMargin, USD_TO_PKR, type CostBreakdown } from '@/lib/cost'
 import toast from 'react-hot-toast'
 
 interface UserRow {
@@ -71,6 +72,87 @@ function timeAgo(iso: string | null): string {
   const d = Math.floor(h / 24)
   if (d < 30) return `${d}d ago`
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/* ─── Inspection cost model card ─── */
+const SALE_PRICES = [
+  { label: 'Quick scan', usd: 0.99 },
+  { label: 'Signed', usd: 4.99 },
+]
+
+function CostModelCard() {
+  const [open, setOpen] = useState(false)
+  const scenarios: { tag: string; hot?: boolean; data: CostBreakdown }[] = [
+    { tag: 'MVP · Gemini · video', hot: true, data: COST_PRESETS.mvpVideo() },
+    { tag: 'MVP · Gemini · photo', data: COST_PRESETS.mvpPhoto() },
+    { tag: 'Claude · video', data: COST_PRESETS.claudeVideo() },
+    { tag: 'Claude · photo', data: COST_PRESETS.claudePhoto() },
+    { tag: 'Roboflow + Claude · video', data: COST_PRESETS.roboflowVideo() },
+    { tag: 'Roboflow + Claude · photo', data: COST_PRESETS.roboflowPhoto() },
+  ]
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-4 text-left">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-teal-600" />
+          </div>
+          <div>
+            <div className="text-sm font-bold text-slate-900">Inspection cost model</div>
+            <div className="text-xs text-slate-400">Marginal cost per inspection · margins at sale prices</div>
+          </div>
+        </div>
+        <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left text-xs text-slate-400 uppercase tracking-wide">
+                  <th className="py-2 pr-4 font-semibold">Scenario</th>
+                  <th className="py-2 px-3 font-semibold">AI</th>
+                  <th className="py-2 px-3 font-semibold">Infra</th>
+                  <th className="py-2 px-3 font-semibold">Total</th>
+                  <th className="py-2 px-3 font-semibold">PKR</th>
+                  {SALE_PRICES.map(p => (
+                    <th key={p.label} className="py-2 px-3 font-semibold">{p.label} margin</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {scenarios.map(({ tag, hot, data }) => (
+                  <tr key={tag} className={`border-t border-slate-100 ${hot ? 'bg-teal-50/40' : ''}`}>
+                    <td className="py-2.5 pr-4 font-semibold text-slate-700 whitespace-nowrap">
+                      {tag} {hot && <span className="ml-1 text-[10px] font-bold text-teal-600">● live</span>}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500 font-mono">${data.aiUsd.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 text-slate-500 font-mono">${data.infraUsd.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900 font-mono">${data.totalUsd.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 text-slate-500 font-mono">₨{data.totalPKR}</td>
+                    {SALE_PRICES.map(p => {
+                      const m = grossMargin(data.totalUsd, p.usd)
+                      return (
+                        <td key={p.label} className={`py-2.5 px-3 font-semibold ${m >= 0.9 ? 'text-emerald-600' : m >= 0.7 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {(m * 100).toFixed(1)}%
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+            Estimates only. Verify model prices, image-token counts, and the ₨{USD_TO_PKR}/$ rate in
+            <code className="mx-1 px-1 py-0.5 bg-slate-100 rounded text-slate-600">src/lib/cost.ts</code>.
+            Call counts &amp; frame counts come from the live pipeline.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminPage() {
@@ -184,6 +266,9 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
+
+      {/* Inspection cost model */}
+      <CostModelCard />
 
       {/* Filters + search — users tab only */}
       {activeTab === 'failed' && null}
