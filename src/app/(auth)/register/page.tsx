@@ -99,7 +99,7 @@ export default function RegisterPage() {
           </div>
           <div className="flex items-center gap-3 pt-2">
             <Shield className="w-4 h-4 text-teal-400 shrink-0" />
-            <span className="text-slate-400 text-xs">3 free inspections · No credit card required · Cancel anytime</span>
+            <span className="text-slate-400 text-xs">Free trial included · No credit card required · Cancel anytime</span>
           </div>
         </div>
 
@@ -122,7 +122,7 @@ export default function RegisterPage() {
 
           <div className="mb-7">
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Create your account</h1>
-            <p className="text-slate-500 mt-1.5 text-sm">3 free inspections — no credit card needed</p>
+            <p className="text-slate-500 mt-1.5 text-sm">Free trial included — no credit card needed</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">

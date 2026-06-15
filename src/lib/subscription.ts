@@ -1,7 +1,7 @@
 export type PlanKey = 'TRIAL' | 'SALES' | 'STARTER' | 'GROWTH' | 'PRO' | 'ENTERPRISE'
 
 export const PLANS: Record<PlanKey, { name: string; credits: number; price: number | null; color: string; badge: string }> = {
-  TRIAL:      { name: 'Free Trial',  credits: 3,      price: null, color: 'teal',   badge: 'bg-teal-50 text-teal-700' },
+  TRIAL:      { name: 'Free Trial',  credits: 2,      price: null, color: 'teal',   badge: 'bg-teal-50 text-teal-700' },
   SALES:      { name: 'Sales',       credits: 999999, price: null, color: 'violet', badge: 'bg-violet-50 text-violet-700' },
   STARTER:    { name: 'Starter',     credits: 50,     price: 19,   color: 'slate',  badge: 'bg-slate-100 text-slate-700' },
   GROWTH:     { name: 'Growth',      credits: 200,    price: 49,   color: 'indigo', badge: 'bg-indigo-50 text-indigo-700' },

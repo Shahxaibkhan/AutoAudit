@@ -69,7 +69,7 @@ export default function TermsPage() {
               },
               {
                 n: '4', title: 'Subscriptions and Credits',
-                body: 'The Service is offered on a credit-based model. Credits expire at the end of each billing period unless otherwise stated. Free trial includes 3 inspections. We reserve the right to modify pricing with 30 days notice. No refunds are provided for unused credits except as required by law.',
+                body: 'The Service is offered on a credit-based model. Credits expire at the end of each billing period unless otherwise stated. Free trial includes 1–2 inspections depending on account type (individual or business). We reserve the right to modify pricing with 30 days notice. No refunds are provided for unused credits except as required by law.',
               },
               {
                 n: '5', title: 'Intellectual Property',

@@ -115,8 +115,8 @@ function PricingSection() {
 
       <p className="text-center text-slate-600 text-sm">
         {tab === 'b2c'
-          ? '3 free inspections to start · No credit card required · Pay only when you need it'
-          : 'All plans include a 14-day free trial · 3 free inspections · No credit card required'}
+          ? '2 free inspections to start · No credit card required · Pay only when you need it'
+          : '1 free inspection to try it out · No credit card required · Contact us to upgrade'}
       </p>
     </div>
   )
@@ -667,7 +667,7 @@ export default function LandingPage() {
               },
               {
                 q: 'What happens during the free trial?',
-                a: 'You get 3 free inspection credits when you sign up — no credit card required. Each credit covers one full AI-analyzed inspection with a PDF report. After 3 inspections, or after 14 days, you can upgrade to a paid plan.',
+                a: 'Individual accounts get 2 free Quick inspections to start, and business accounts get 1 free inspection — no credit card required. After your free trial (14 days), or once your credits are used, you can contact us to upgrade to a paid plan.',
               },
               {
                 q: 'Can I use this on my phone?',
@@ -711,12 +711,12 @@ export default function LandingPage() {
           </h2>
           <p className="text-slate-400 mb-10 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
             Join businesses worldwide using AI to eliminate damage disputes.
-            3 free inspections, no credit card required.
+            Free trial included — no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
             <Link href="/register"
               className="inline-flex items-center justify-center gap-2 bg-teal-500 text-slate-950 px-8 py-4 rounded-2xl text-base font-bold hover:bg-teal-400 transition-all shadow-2xl shadow-teal-500/25 hover:-translate-y-0.5">
-              Start free — 3 inspections <ArrowRight className="w-4 h-4" />
+              Start free trial <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/sample-report"
               className="inline-flex items-center justify-center gap-2 bg-white/8 border border-white/15 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-white/12 transition-all">
