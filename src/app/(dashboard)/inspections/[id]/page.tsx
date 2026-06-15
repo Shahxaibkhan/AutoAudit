@@ -232,7 +232,7 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
                   const gallery = inspection.images.map(m => ({ src: m.url, caption: m.angle.replace(/_/g, ' ') }))
                   return (
                     <div key={img.id} className="relative">
-                      <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden">
+                      <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden relative">
                         <LightboxImage src={img.url} alt={img.angle} fill className="object-cover" sizes="150px"
                           caption={img.angle.replace(/_/g, ' ')} gallery={gallery} galleryIndex={i} />
                       </div>

@@ -53,7 +53,7 @@ export default function LightboxImage({
       {/* Thumbnail — clickable */}
       <div
         onClick={() => { setIdx(galleryIndex); setOpen(true) }}
-        className="relative cursor-zoom-in group"
+        className={`cursor-zoom-in group ${fill ? 'absolute inset-0' : 'relative'}`}
         style={fill ? undefined : { display: 'inline-block' }}
       >
         {fill ? (
