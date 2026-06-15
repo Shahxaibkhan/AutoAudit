@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { SINGLE_INSPECTION_TYPES } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +27,22 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     data: { verificationState: 'OWNER_CONFIRMED' },
   })
 
-  // Generate unique share token (expires 7 days)
+  const isSingleParty = SINGLE_INSPECTION_TYPES.includes(inspection.type)
+
+  if (isSingleParty) {
+    // B2C: complete directly, no customer review needed
+    await prisma.inspection.update({
+      where: { id: params.id },
+      data: {
+        ownerSignedAt: new Date(),
+        ownerPhone: phone || null,
+        status: 'COMPLETED',
+      },
+    })
+    return NextResponse.json({ completed: true })
+  }
+
+  // B2B: generate share token for customer review
   const shareToken = crypto.randomUUID()
   const shareTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 

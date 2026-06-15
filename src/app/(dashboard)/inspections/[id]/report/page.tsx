@@ -164,7 +164,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
           <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">{reportTitle}</h1>
           <p className="text-slate-400 text-xs sm:text-sm mt-0.5">{formatDate(inspection.createdAt)}</p>
         </div>
-        <DownloadReportButton inspectionId={params.id} />
+        {inspection.tier !== 'QUICK' && <DownloadReportButton inspectionId={params.id} />}
       </div>
 
       <div id="report-content" className="space-y-4 sm:space-y-6">

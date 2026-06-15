@@ -8,6 +8,7 @@ import {
   Loader2, Sparkles, Send, AlertTriangle, Camera
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { SINGLE_INSPECTION_TYPES } from '@/lib/utils'
 
 interface Damage {
   id: string; type: string; severity: string; panelCode: string | null
@@ -268,6 +269,11 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error)
+      if (d.completed) {
+        toast.success('Inspection complete!')
+        router.push(`/inspections/${params.id}/report`)
+        return
+      }
       setShareUrl(d.shareUrl)
       await load()
       toast.success('Signed! Share the link with your customer.')
@@ -293,6 +299,7 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
   const { inspection, damages, summary } = data
   const allDamages = [...damages.severe, ...damages.moderate, ...damages.minor]
   const isSigned = !!inspection.ownerSignedAt
+  const isSingleParty = SINGLE_INSPECTION_TYPES.includes(inspection.type)
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -312,7 +319,7 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
       {/* Summary bar */}
       <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-700 mb-3">
-          AI found <strong>{summary.total}</strong> potential damages. Review before sending to customer.
+          AI found <strong>{summary.total}</strong> potential damages. Review and confirm before completing.
         </p>
         <div className="flex gap-4 text-xs">
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />{summary.severe} severe</span>
@@ -321,8 +328,8 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
         </div>
       </div>
 
-      {/* Share link (after signing) */}
-      {isSigned && shareUrl && (
+      {/* Share link (after signing — B2B only) */}
+      {isSigned && shareUrl && !isSingleParty && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
           <div className="flex items-start gap-3 mb-3">
             <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -357,7 +364,7 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
               <p className="text-emerald-700 text-sm leading-relaxed mb-4">
                 The AI inspected all frames and found no damage, scratches, dents, or defects. This vehicle appears to be in excellent condition.
               </p>
-              <p className="text-emerald-600 text-xs">Sign below to share this clean report with your customer.</p>
+              <p className="text-emerald-600 text-xs">{isSingleParty ? 'Complete the inspection below to generate your report.' : 'Sign below to share this clean report with your customer.'}</p>
             </div>
           ) : (
             <>
@@ -434,15 +441,17 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
         </div>
       )}
 
-      {/* Sign button */}
+      {/* Sign / complete button */}
       {!isSigned && (
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
           <div className="flex items-start gap-3 mb-4">
             <Sparkles className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-slate-900 text-sm">Ready to send to customer?</p>
+              <p className="font-bold text-slate-900 text-sm">
+                {isSingleParty ? 'Ready to complete?' : 'Ready to send to customer?'}
+              </p>
               <p className="text-xs text-slate-500 mt-0.5">
-                Unreviewed damages will be auto-confirmed. You can still view but not edit after signing.
+                Unreviewed damages will be auto-confirmed. You can still view but not edit after this.
               </p>
             </div>
           </div>
@@ -454,8 +463,8 @@ export default function OwnerReviewPage({ params }: { params: { id: string } }) 
           </div>
           <button onClick={handleSign} disabled={signing}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-teal-600 text-white rounded-xl text-sm font-bold hover:bg-teal-700 disabled:opacity-60 transition-colors shadow-lg shadow-teal-500/20">
-            {signing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {signing ? 'Signing…' : 'Sign & Send to Customer →'}
+            {signing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+            {signing ? (isSingleParty ? 'Completing…' : 'Signing…') : (isSingleParty ? 'Complete Inspection →' : 'Sign & Send to Customer →')}
           </button>
         </div>
       )}

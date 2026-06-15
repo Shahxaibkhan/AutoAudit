@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   const userId = (session.user as { id: string }).id
   const body = await req.json()
-  const { vehicleId, type, renterName, renterPhone, renterEmail, rentalStart, rentalEnd, preInspectionId, notes } = body
+  const { vehicleId, type, tier, renterName, renterPhone, renterEmail, rentalStart, rentalEnd, preInspectionId, notes } = body
 
   if (!vehicleId || !type) {
     return NextResponse.json({ error: 'vehicleId and type are required' }, { status: 400 })
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       vehicleId,
       userId,
       type,
+      tier: tier === 'QUICK' ? 'QUICK' : 'FULL',
       status: 'PENDING',
       renterName,
       renterPhone,

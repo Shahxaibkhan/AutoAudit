@@ -32,10 +32,8 @@ function PricingSection() {
   const [tab, setTab] = useState<'b2c' | 'b2b'>('b2c')
 
   const b2cPlans = [
-    { name: 'Quick Check', price: '$0.99', period: '/inspection', badge: null, desc: 'Fast AI screening — good for a quick look.', features: ['AI damage detection', 'Condition grade A–F', 'Evidence photos', 'Shareable report'], cta: 'Get started', highlight: false },
-    { name: 'Standard', price: '$1.99', period: '/inspection', badge: 'Most popular', desc: 'Full report for buyers, sellers, and personal checks.', features: ['Everything in Quick', 'Panel-by-panel breakdown', 'Repaint & rim detection', 'PDF download'], cta: 'Get started', highlight: true },
-    { name: 'Pro', price: '$3.99', period: '/inspection', badge: null, desc: 'Advanced analysis including hidden damage indicators.', features: ['Everything in Standard', 'Panel misalignment detection', 'Headlight clarity check', 'Priority AI processing'], cta: 'Get started', highlight: false },
-    { name: 'With Signatures', price: '$4.99', period: '/inspection', badge: null, desc: 'Both parties sign. SHA-256 tamper-proof seal.', features: ['Everything in Pro', 'Owner reviews findings', 'Customer signs agreement', 'SHA-256 verification hash'], cta: 'Get started', highlight: false },
+    { name: 'Quick', price: '$0.99', period: '/inspection', badge: null, desc: 'Fast AI photo scan — good for a quick look.', features: ['8-photo guided capture', 'AI damage detection', 'Condition grade A–F', 'Web report'], cta: 'Get started', highlight: false },
+    { name: 'Full', price: '$2.99', period: '/inspection', badge: 'Recommended', desc: 'Complete inspection with downloadable report.', features: ['Photos or video walkaround', 'Hidden damage indicators', 'AI recommendations', 'PDF download'], cta: 'Get started', highlight: true },
   ]
 
   const b2bPlans = [
@@ -74,7 +72,7 @@ function PricingSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className={`grid grid-cols-1 gap-4 mb-8 ${tab === 'b2c' ? 'sm:grid-cols-2 max-w-2xl mx-auto' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         {plans.map(plan => (
           <div key={plan.name}
             className={`relative rounded-2xl p-6 border transition-all ${

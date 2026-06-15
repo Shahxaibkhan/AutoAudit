@@ -64,6 +64,7 @@ function NewInspectionForm() {
   const [form, setForm] = useState({
     vehicleId: params.get('vehicleId') || '',
     type: 'JUST_CHECK',
+    tier: 'FULL',
     renterName: '', renterPhone: '', renterEmail: '',
     rentalStart: '', rentalEnd: '',
     preInspectionId: '', notes: '',
@@ -269,6 +270,50 @@ function NewInspectionForm() {
                   </div>
                 </div>
               </>
+            )}
+
+            {/* Tier picker — B2C only */}
+            {isB2C && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Inspection Package *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Quick */}
+                  <label className={`flex flex-col gap-1.5 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                    form.tier === 'QUICK' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 hover:border-slate-300'
+                  }`}>
+                    <input type="radio" name="tier" value="QUICK" checked={form.tier === 'QUICK'}
+                      onChange={() => setForm(p => ({ ...p, tier: 'QUICK' }))} className="hidden" />
+                    <div className="flex items-center justify-between">
+                      <div className={`text-base font-black ${form.tier === 'QUICK' ? 'text-teal-800' : 'text-slate-800'}`}>Quick</div>
+                      <div className={`text-base font-black ${form.tier === 'QUICK' ? 'text-teal-700' : 'text-slate-600'}`}>$0.99</div>
+                    </div>
+                    <div className="text-xs text-slate-500 leading-relaxed space-y-0.5">
+                      <p>✓ Photos only (8 guided angles)</p>
+                      <p>✓ AI damage detection</p>
+                      <p>✓ Condition grade A–F</p>
+                      <p>✓ Web report</p>
+                    </div>
+                  </label>
+                  {/* Full */}
+                  <label className={`flex flex-col gap-1.5 p-4 border-2 rounded-2xl cursor-pointer transition-all relative ${
+                    form.tier === 'FULL' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 hover:border-slate-300'
+                  }`}>
+                    <input type="radio" name="tier" value="FULL" checked={form.tier === 'FULL'}
+                      onChange={() => setForm(p => ({ ...p, tier: 'FULL' }))} className="hidden" />
+                    <span className="absolute -top-2.5 left-3 text-xs bg-teal-500 text-white px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+                    <div className="flex items-center justify-between">
+                      <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-800' : 'text-slate-800'}`}>Full</div>
+                      <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-700' : 'text-slate-600'}`}>$2.99</div>
+                    </div>
+                    <div className="text-xs text-slate-500 leading-relaxed space-y-0.5">
+                      <p>✓ Photos or video walkaround</p>
+                      <p>✓ Hidden damage indicators</p>
+                      <p>✓ AI recommendations</p>
+                      <p>✓ PDF download</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
             )}
 
             <div>

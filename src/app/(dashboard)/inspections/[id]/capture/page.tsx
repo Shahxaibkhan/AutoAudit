@@ -412,6 +412,7 @@ export default function CapturePage({ params }: { params: { id: string } }) {
   const [inspection, setInspection] = useState<{
     vehicle: { make: string; model: string; year: number }
     type: string
+    tier: string
   } | null>(null)
 
   useEffect(() => {
@@ -421,6 +422,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
       .then(d => {
         setInspection(d)
         setUploadedImages(d.images || [])
+        // QUICK tier skips mode selection — photos only
+        if (d.tier === 'QUICK') setMode('photo')
       })
       .catch(() => toast.error('Failed to load inspection'))
   }, [params.id])
@@ -989,23 +992,26 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         <div className="space-y-3">
           <p className="text-slate-500 text-sm mb-5">Choose how to capture this inspection:</p>
 
-          <button
-            onClick={() => setMode('video')}
-            className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
-              <Video className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold text-slate-900 flex items-center gap-2">
-                Video walkaround
-                <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+          {/* Video option — Full tier only */}
+          {inspection?.tier !== 'QUICK' && (
+            <button
+              onClick={() => setMode('video')}
+              className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
+                <Video className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Record a 60-second walkaround — AI extracts the best frames automatically.
-              </p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
-          </button>
+              <div className="flex-1">
+                <div className="font-bold text-slate-900 flex items-center gap-2">
+                  Video walkaround
+                  <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+                </div>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Record a 60-second walkaround — AI extracts the best frames automatically.
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
+            </button>
+          )}
 
           <button onClick={() => setMode('photo')}
             className="w-full flex items-center gap-5 bg-white border-2 border-slate-200 rounded-2xl p-5 text-left hover:border-slate-300 transition-all group">

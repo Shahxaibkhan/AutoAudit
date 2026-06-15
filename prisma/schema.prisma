@@ -95,6 +95,8 @@ model Inspection {
   type             String
   // PENDING | IN_PROGRESS | COMPLETED | PENDING_OWNER_REVIEW | PENDING_CUSTOMER_REVIEW | LOCKED | DISPUTED
   status           String            @default("PENDING")
+  // QUICK | FULL
+  tier             String            @default("FULL")
   captureMode      String            @default("PHOTO")
   renterName       String?
   renterPhone      String?
