@@ -6,10 +6,12 @@ import {
   ArrowLeft, Camera, Upload, CheckCircle, Loader2, X, Sparkles,
   Video, Sun, Focus, AlertTriangle, RotateCcw,
   ChevronRight, ImageIcon, Film, Smartphone, Car, ArrowUp,
-  ArrowRight, ArrowDown, Navigation
+  ArrowRight, ArrowDown, Navigation, Lock
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
+import UpgradeModal from '@/components/UpgradeModal'
 
 /* ─── types ─────────────────────────────────────────────────────────── */
 
@@ -374,6 +376,13 @@ function isIOS(): boolean {
 
 export default function CapturePage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const sessionUser = session?.user as any
+  const isTrial = sessionUser?.plan === 'TRIAL'
+  const isConsumer = ['individual', 'buyer', 'seller', 'my_car'].includes(sessionUser?.industry ?? '')
+  const accountType: 'b2c' | 'b2b' = isConsumer ? 'b2c' : 'b2b'
+  const [showUpgrade, setShowUpgrade] = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const closeupInputRef = useRef<HTMLInputElement>(null)
   const iosVideoInputRef = useRef<HTMLInputElement>(null)
@@ -967,6 +976,8 @@ export default function CapturePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} accountType={accountType} />
+
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/inspections/${params.id}`} className="text-slate-400 hover:text-slate-600">
           <ArrowLeft className="w-5 h-5" />
@@ -992,25 +1003,47 @@ export default function CapturePage({ params }: { params: { id: string } }) {
         <div className="space-y-3">
           <p className="text-slate-500 text-sm mb-5">Choose how to capture this inspection:</p>
 
-          {/* Video option — Full tier only */}
+          {/* Video option */}
           {inspection?.tier !== 'QUICK' && (
-            <button
-              onClick={() => setMode('video')}
-              className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
-              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
-                <Video className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-slate-900 flex items-center gap-2">
-                  Video walkaround
-                  <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+            isTrial ? (
+              /* Locked during trial — show with upgrade sticker */
+              <button type="button" onClick={() => setShowUpgrade(true)}
+                className="w-full flex items-center gap-5 bg-white border-2 border-slate-200 rounded-2xl p-5 text-left opacity-70 hover:opacity-90 transition-opacity relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-500 rounded-xl flex items-center justify-center shrink-0">
+                  <Video className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  Record a 60-second walkaround — AI extracts the best frames automatically.
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
-            </button>
+                <div className="flex-1">
+                  <div className="font-bold text-slate-500 flex items-center gap-2">
+                    Video walkaround
+                    <span className="text-xs bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" /> Full plan
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-0.5">
+                    Record a 60-second walkaround — AI extracts the best frames automatically.
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-200" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setMode('video')}
+                className="w-full flex items-center gap-5 bg-white border-2 border-teal-200 rounded-2xl p-5 text-left hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
+                  <Video className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    Video walkaround
+                    <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    Record a 60-second walkaround — AI extracts the best frames automatically.
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors" />
+              </button>
+            )
           )}
 
           <button onClick={() => setMode('photo')}

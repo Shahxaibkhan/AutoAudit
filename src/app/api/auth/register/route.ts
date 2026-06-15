@@ -38,6 +38,11 @@ export async function POST(req: Request) {
     const hashed = await bcrypt.hash(password, 12)
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
 
+    const B2C_INDUSTRIES = ['individual', 'buyer', 'seller', 'my_car']
+    const isB2C = !industry || B2C_INDUSTRIES.includes(industry)
+    // B2C: 2 Quick-tier inspections; B2B: 1 inspection
+    const trialCredits = isB2C ? 2 : 1
+
     const user = await prisma.user.create({
       data: {
         name, email, password: hashed, businessName, phone,
@@ -46,7 +51,7 @@ export async function POST(req: Request) {
         plan: 'TRIAL',
         trialEndsAt,
         creditsUsed: 0,
-        creditsTotal: 3,
+        creditsTotal: trialCredits,
         creditsPeriodStart: new Date(),
       },
     })

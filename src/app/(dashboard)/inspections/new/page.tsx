@@ -2,10 +2,11 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inspectionTypeLabel, isSingleInspection } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
+import UpgradeModal from '@/components/UpgradeModal'
 
 /* ── Type groups ─────────────────────────────────────────────────────── */
 const SINGLE_TYPES = [
@@ -54,9 +55,18 @@ function NewInspectionForm() {
   const router = useRouter()
   const params = useSearchParams()
   const { data: session } = useSession()
-  const userIndustry = (session?.user as any)?.industry as string | null
+  const user = session?.user as any
+  const userIndustry = user?.industry as string | null
   const isConsumer = userIndustry ? CONSUMER_INDUSTRIES.includes(userIndustry) : false
 
+  // Trial / quota state
+  const isTrial = user?.plan === 'TRIAL'
+  const trialExpired = isTrial && user?.trialEndsAt ? new Date() > new Date(user.trialEndsAt) : false
+  const quotaHit = isTrial && (user?.creditsUsed ?? 0) >= (user?.creditsTotal ?? 0)
+  const isBlocked = isTrial && (trialExpired || quotaHit)
+  const accountType: 'b2c' | 'b2b' = isConsumer ? 'b2c' : 'b2b'
+
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const [loading, setLoading] = useState(false)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [preInspections, setPreInspections] = useState<Inspection[]>([])
@@ -69,6 +79,11 @@ function NewInspectionForm() {
     rentalStart: '', rentalEnd: '',
     preInspectionId: '', notes: '',
   })
+
+  // Auto-open upgrade modal if blocked
+  useEffect(() => {
+    if (isBlocked) setShowUpgrade(true)
+  }, [isBlocked])
 
   useEffect(() => {
     fetch('/api/vehicles').then(r => r.json()).then(setVehicles)
@@ -107,10 +122,12 @@ function NewInspectionForm() {
     if (!form.vehicleId) return toast.error('Please select a vehicle')
     setLoading(true)
     try {
+      // Trial users are always Quick tier
+      const payload = { ...form, tier: isTrial ? 'QUICK' : form.tier }
       const res = await fetch('/api/inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -128,6 +145,8 @@ function NewInspectionForm() {
 
   return (
     <div>
+      <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} accountType={accountType} />
+
       <div className="flex items-center gap-4 mb-8">
         <Link href="/inspections" className="text-slate-400 hover:text-slate-600 transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -294,24 +313,43 @@ function NewInspectionForm() {
                       <p>✓ Web report</p>
                     </div>
                   </label>
-                  {/* Full */}
-                  <label className={`flex flex-col gap-1.5 p-4 border-2 rounded-2xl cursor-pointer transition-all relative ${
-                    form.tier === 'FULL' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 hover:border-slate-300'
-                  }`}>
-                    <input type="radio" name="tier" value="FULL" checked={form.tier === 'FULL'}
-                      onChange={() => setForm(p => ({ ...p, tier: 'FULL' }))} className="hidden" />
-                    <span className="absolute -top-2.5 left-3 text-xs bg-teal-500 text-white px-2 py-0.5 rounded-full font-semibold">Recommended</span>
-                    <div className="flex items-center justify-between">
-                      <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-800' : 'text-slate-800'}`}>Full</div>
-                      <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-700' : 'text-slate-600'}`}>$2.99</div>
-                    </div>
-                    <div className="text-xs text-slate-500 leading-relaxed space-y-0.5">
-                      <p>✓ Photos or video walkaround</p>
-                      <p>✓ Hidden damage indicators</p>
-                      <p>✓ AI recommendations</p>
-                      <p>✓ PDF download</p>
-                    </div>
-                  </label>
+                  {/* Full — locked during trial */}
+                  {isTrial ? (
+                    <button type="button" onClick={() => setShowUpgrade(true)}
+                      className="flex flex-col gap-1.5 p-4 border-2 border-slate-200 rounded-2xl text-left relative opacity-70 hover:opacity-90 transition-opacity">
+                      <span className="absolute -top-2.5 left-3 text-xs bg-slate-400 text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Upgrade to unlock
+                      </span>
+                      <div className="flex items-center justify-between">
+                        <div className="text-base font-black text-slate-400">Full</div>
+                        <div className="text-base font-black text-slate-400">$2.99</div>
+                      </div>
+                      <div className="text-xs text-slate-400 leading-relaxed space-y-0.5">
+                        <p>✓ Photos or video walkaround</p>
+                        <p>✓ Hidden damage indicators</p>
+                        <p>✓ AI recommendations</p>
+                        <p>✓ PDF download</p>
+                      </div>
+                    </button>
+                  ) : (
+                    <label className={`flex flex-col gap-1.5 p-4 border-2 rounded-2xl cursor-pointer transition-all relative ${
+                      form.tier === 'FULL' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 hover:border-slate-300'
+                    }`}>
+                      <input type="radio" name="tier" value="FULL" checked={form.tier === 'FULL'}
+                        onChange={() => setForm(p => ({ ...p, tier: 'FULL' }))} className="hidden" />
+                      <span className="absolute -top-2.5 left-3 text-xs bg-teal-500 text-white px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+                      <div className="flex items-center justify-between">
+                        <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-800' : 'text-slate-800'}`}>Full</div>
+                        <div className={`text-base font-black ${form.tier === 'FULL' ? 'text-teal-700' : 'text-slate-600'}`}>$2.99</div>
+                      </div>
+                      <div className="text-xs text-slate-500 leading-relaxed space-y-0.5">
+                        <p>✓ Photos or video walkaround</p>
+                        <p>✓ Hidden damage indicators</p>
+                        <p>✓ AI recommendations</p>
+                        <p>✓ PDF download</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
             )}
