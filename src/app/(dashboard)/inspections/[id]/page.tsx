@@ -7,6 +7,7 @@ import { ArrowLeft, Camera, FileText, Car, AlertTriangle, CheckCircle } from 'lu
 import AnalyzeButton from '@/components/AnalyzeButton'
 import { formatDate, inspectionTypeLabel, inspectionTypeBadge, inspectionPartyLabel, inspectionPeriodLabels } from '@/lib/utils'
 import Image from 'next/image'
+import LightboxImage from '@/components/LightboxImage'
 
 export default async function InspectionDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -227,14 +228,18 @@ export default async function InspectionDetailPage({ params }: { params: { id: s
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                {inspection.images.map(img => (
-                  <div key={img.id} className="relative">
-                    <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden">
-                      <Image src={img.url} alt={img.angle} fill className="object-cover" sizes="150px" />
+                {inspection.images.map((img, i) => {
+                  const gallery = inspection.images.map(m => ({ src: m.url, caption: m.angle.replace(/_/g, ' ') }))
+                  return (
+                    <div key={img.id} className="relative">
+                      <div className="aspect-video bg-slate-100 rounded-xl overflow-hidden">
+                        <LightboxImage src={img.url} alt={img.angle} fill className="object-cover" sizes="150px"
+                          caption={img.angle.replace(/_/g, ' ')} gallery={gallery} galleryIndex={i} />
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1 text-center capitalize">{img.angle.replace('_', ' ')}</p>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1 text-center capitalize">{img.angle.replace('_', ' ')}</p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
