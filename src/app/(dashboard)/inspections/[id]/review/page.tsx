@@ -2,13 +2,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   ArrowLeft, CheckCircle, XCircle, Edit2, Plus, ChevronDown, ChevronUp,
   Loader2, Sparkles, Send, AlertTriangle, Camera
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { SINGLE_INSPECTION_TYPES } from '@/lib/utils'
+import LightboxImage from '@/components/LightboxImage'
 
 interface Damage {
   id: string; type: string; severity: string; panelCode: string | null
@@ -61,7 +61,8 @@ function DamageCard({ damage, onAction, acting }: {
       <div className="flex gap-3">
         {damage.imageUrl && (
           <div className="w-20 h-14 rounded-lg overflow-hidden bg-slate-100 relative shrink-0">
-            <Image src={damage.imageUrl} alt={damage.type} fill className="object-cover" sizes="80px" />
+            <LightboxImage src={damage.imageUrl} alt={damage.type} fill className="object-cover" sizes="80px"
+              caption={`${damage.severity} · ${damage.type.replace(/_/g, ' ')}`} />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -169,7 +170,8 @@ function SeveritySection({ label, color, damages, inspectionId, onAction, acting
           <div className="flex gap-1">
             {previewImages.map(d => (
               <div key={d.id} className="w-12 h-8 rounded-md overflow-hidden bg-slate-100 relative">
-                <Image src={d.imageUrl!} alt="" fill className="object-cover" sizes="48px" />
+                <LightboxImage src={d.imageUrl!} alt={d.type} fill className="object-cover" sizes="48px"
+                  caption={`${d.severity} · ${d.type.replace(/_/g, ' ')}`} />
               </div>
             ))}
             {damages.length - previewImages.length > 0 && (
